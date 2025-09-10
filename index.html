@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ordinance & Resolution Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .container {
+            max-width: 900px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 24px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            animation-name: animatetop;
+            animation-duration: 0.4s;
+        }
+        @keyframes animatetop {
+            from {top: -300px; opacity: 0}
+            to {top: 0; opacity: 1}
+        }
+    </style>
+</head>
+<body>
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-2">Ordinance & Resolution Manager</h1>
+            <p class="text-gray-600">Securely store and link public documents.</p>
+        </header>
+
+        <!-- Current User Info & Action Buttons -->
+        <div id="auth-status" class="bg-gray-100 p-4 rounded-lg shadow mb-6 text-sm text-gray-700 flex justify-between items-center">
+            <p id="user-info">Authenticating...</p>
+            <div id="auth-buttons" class="space-x-2">
+                <button id="login-button" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors" style="display: none;">Log In</button>
+                <button id="change-password-button" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors" style="display: none;">Change Password</button>
+                <button id="logout-button" class="bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors" style="display: none;">Log Out</button>
+            </div>
+        </div>
+
+        <!-- Add Document Form (Admin Only) -->
+        <section id="admin-form-section" class="bg-white p-6 rounded-xl shadow-lg mb-8" style="display: none;">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Add New Document</h2>
+            <form id="add-form" class="space-y-4">
+                <div>
+                    <label for="ordinance-number" class="block text-gray-700 font-medium mb-1">Ordinance/Resolution Number</label>
+                    <input type="text" id="ordinance-number" name="ordinance-number" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., Ord. No. 2024-123" required>
+                </div>
+                <div>
+                    <label for="title" class="block text-gray-700 font-medium mb-1">Title</label>
+                    <input type="text" id="title" name="title" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., Parks and Recreation Act" required>
+                </div>
+                <div>
+                    <label for="date" class="block text-gray-700 font-medium mb-1">Date</label>
+                    <input type="date" id="date" name="date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div>
+                    <label for="google-drive-link" class="block text-gray-700 font-medium mb-1">Google Drive Link / Document URL</label>
+                    <input type="url" id="google-drive-link" name="google-drive-link" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., https://drive.google.com/..." required>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button type="submit" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
+                        Add Document
+                    </button>
+                    <span id="form-message" class="text-sm"></span>
+                </div>
+            </form>
+        </section>
+
+        <!-- Document List -->
+        <section class="bg-white p-6 rounded-xl shadow-lg">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Current Documents</h2>
+            <div id="document-list" class="space-y-4">
+                <p id="loading-message" class="text-gray-500 text-center">Loading documents...</p>
+                <!-- Documents will be dynamically inserted here -->
+            </div>
+        </section>
+    </div>
+
+    <!-- The Login Modal -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Admin Login</h3>
+            <p class="text-sm text-gray-600 mb-4">Please log in with your admin credentials to manage documents.</p>
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label for="email" class="block text-gray-700 font-medium mb-1">Email</label>
+                    <input type="email" id="email" name="email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="admin@example.com" required>
+                </div>
+                <div>
+                    <label for="password" class="block text-gray-700 font-medium mb-1">Password</label>
+                    <input type="password" id="password" name="password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="password123" required>
+                </div>
+                <div class="flex justify-end space-x-2 mt-4">
+                    <button type="button" id="cancel-login" class="bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors">Cancel</button>
+                    <button type="submit" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">Log In</button>
+                </div>
+            </form>
+            <p id="login-error-message" class="text-sm text-red-500 mt-2"></p>
+        </div>
+    </div>
+    
+    <!-- The Change Password Modal -->
+    <div id="change-password-modal" class="modal">
+        <div class="modal-content">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Change Password</h3>
+            <p class="text-sm text-gray-600 mb-4">Enter your current password and your new password.</p>
+            <form id="change-password-form" class="space-y-4">
+                <div>
+                    <label for="current-password" class="block text-gray-700 font-medium mb-1">Current Password</label>
+                    <input type="password" id="current-password" name="current-password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div>
+                    <label for="new-password" class="block text-gray-700 font-medium mb-1">New Password</label>
+                    <input type="password" id="new-password" name="new-password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div>
+                    <label for="confirm-new-password" class="block text-gray-700 font-medium mb-1">Confirm New Password</label>
+                    <input type="password" id="confirm-new-password" name="confirm-new-password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div class="flex justify-end space-x-2 mt-4">
+                    <button type="button" id="cancel-change-password" class="bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors">Cancel</button>
+                    <button type="submit" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">Confirm Change</button>
+                </div>
+            </form>
+            <p id="change-password-error-message" class="text-sm text-red-500 mt-2"></p>
+        </div>
+    </div>
+    
+    <script>
+        // UI Elements
+        const addForm = document.getElementById('add-form');
+        const adminFormSection = document.getElementById('admin-form-section');
+        const documentList = document.getElementById('document-list');
+        const formMessage = document.getElementById('form-message');
+        const loadingMessage = document.getElementById('loading-message');
+        const userInfo = document.getElementById('user-info');
+        const loginButton = document.getElementById('login-button');
+        const logoutButton = document.getElementById('logout-button');
+        const changePasswordButton = document.getElementById('change-password-button');
+        const loginModal = document.getElementById('login-modal');
+        const loginForm = document.getElementById('login-form');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const cancelLoginButton = document.getElementById('cancel-login');
+        const loginErrorMessage = document.getElementById('login-error-message');
+        const changePasswordModal = document.getElementById('change-password-modal');
+        const changePasswordForm = document.getElementById('change-password-form');
+        const currentPasswordInput = document.getElementById('current-password');
+        const newPasswordInput = document.getElementById('new-password');
+        const confirmNewPasswordInput = document.getElementById('confirm-new-password');
+        const cancelChangePasswordButton = document.getElementById('cancel-change-password');
+        const changePasswordErrorMessage = document.getElementById('change-password-error-message');
+
+        // IMPORTANT: In a real app, this API_URL would be your Vercel deployment URL
+        const API_URL = 'https://your-vercel-project.vercel.app/api';
+
+        let authToken = null;
+
+        // Function to check auth state on page load
+        const checkAuthStatus = () => {
+            authToken = localStorage.getItem('authToken');
+            if (authToken) {
+                // If a token exists, assume we are logged in and show admin view
+                updateUIForAdmin();
+                loadDocuments();
+            } else {
+                updateUIForPublic();
+            }
+        };
+
+        const updateUIForAdmin = () => {
+            userInfo.textContent = `Authenticated as Admin`;
+            adminFormSection.style.display = 'block';
+            loginButton.style.display = 'none';
+            logoutButton.style.display = 'block';
+            changePasswordButton.style.display = 'block';
+        };
+
+        const updateUIForPublic = () => {
+            userInfo.textContent = "Not authenticated. Log in as admin.";
+            adminFormSection.style.display = 'none';
+            loginButton.style.display = 'block';
+            logoutButton.style.display = 'none';
+            changePasswordButton.style.display = 'none';
+            documentList.innerHTML = '<p class="text-gray-500 text-center">Please log in as an administrator to view and add documents.</p>';
+        };
+
+        // Function to load documents from the backend
+        const loadDocuments = async () => {
+            loadingMessage.textContent = 'Loading documents...';
+            try {
+                const response = await fetch(`${API_URL}/documents`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch documents. Your session may have expired.');
+                }
+
+                const documents = await response.json();
+                renderDocuments(documents);
+            } catch (error) {
+                console.error("Error loading documents:", error);
+                loadingMessage.textContent = 'Error loading documents. Please log in again.';
+                updateUIForPublic();
+            }
+        };
+
+        // Function to render documents to the UI
+        const renderDocuments = (documents) => {
+            loadingMessage.textContent = '';
+            documentList.innerHTML = '';
+            if (documents.length === 0) {
+                documentList.innerHTML = '<p class="text-gray-500 text-center">No documents found.</p>';
+            } else {
+                documents.sort((a, b) => new Date(b.date) - new Date(a.date));
+                documents.forEach(doc => {
+                    const docItem = document.createElement('div');
+                    docItem.className = 'bg-gray-50 p-4 rounded-lg shadow-sm flex flex-col sm:flex-row sm:items-center justify-between';
+                    docItem.innerHTML = `
+                        <div>
+                            <p class="font-bold text-gray-800 text-lg">${doc.title}</p>
+                            <p class="text-sm text-gray-600"><strong>Number:</strong> ${doc.ordinanceNumber}</p>
+                            <p class="text-sm text-gray-600"><strong>Date:</strong> ${doc.date}</p>
+                        </div>
+                        <a href="${doc.googleDriveLink}" target="_blank" class="mt-4 sm:mt-0 bg-green-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-600 transition-colors text-center shadow">
+                            View Document
+                        </a>
+                    `;
+                    documentList.appendChild(docItem);
+                });
+            }
+        };
+
+        // Form submission handler
+        addForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!authToken) {
+                formMessage.textContent = 'You must be logged in to add documents.';
+                formMessage.style.color = 'red';
+                return;
+            }
+
+            const ordinanceNumber = document.getElementById('ordinance-number').value;
+            const title = document.getElementById('title').value;
+            const date = document.getElementById('date').value;
+            const googleDriveLink = document.getElementById('google-drive-link').value;
+
+            try {
+                const response = await fetch(`${API_URL}/documents`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ ordinanceNumber, title, date, googleDriveLink })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to add document.');
+                }
+
+                formMessage.textContent = 'Document added successfully!';
+                formMessage.style.color = 'green';
+                addForm.reset();
+                setTimeout(() => {
+                    formMessage.textContent = '';
+                }, 3000);
+                loadDocuments(); // Refresh the list
+            } catch (error) {
+                console.error("Error adding document: ", error);
+                formMessage.textContent = 'Error adding document.';
+                formMessage.style.color = 'red';
+            }
+        });
+
+        // Login/Logout button handlers
+        loginButton.addEventListener('click', () => {
+            loginModal.style.display = 'block';
+        });
+
+        cancelLoginButton.addEventListener('click', () => {
+            loginModal.style.display = 'none';
+            loginForm.reset();
+            loginErrorMessage.textContent = '';
+        });
+        
+        logoutButton.addEventListener('click', () => {
+            localStorage.removeItem('authToken');
+            updateUIForPublic();
+            console.log('User signed out.');
+        });
+        
+        changePasswordButton.addEventListener('click', () => {
+            changePasswordModal.style.display = 'block';
+        });
+        
+        cancelChangePasswordButton.addEventListener('click', () => {
+            changePasswordModal.style.display = 'none';
+            changePasswordForm.reset();
+            changePasswordErrorMessage.textContent = '';
+        });
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            loginErrorMessage.textContent = '';
+            try {
+                const response = await fetch(`${API_URL}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Login failed.');
+                }
+
+                const data = await response.json();
+                authToken = data.token;
+                localStorage.setItem('authToken', authToken);
+
+                loginModal.style.display = 'none';
+                loginForm.reset();
+                updateUIForAdmin();
+                loadDocuments(); // Load docs after successful login
+                console.log('Admin login successful.');
+            } catch (error) {
+                console.error("Login failed:", error);
+                loginErrorMessage.textContent = error.message;
+            }
+        });
+        
+        changePasswordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            changePasswordErrorMessage.textContent = '';
+            
+            const currentPassword = currentPasswordInput.value;
+            const newPassword = newPasswordInput.value;
+            const confirmNewPassword = confirmNewPasswordInput.value;
+            
+            if (newPassword !== confirmNewPassword) {
+                changePasswordErrorMessage.textContent = "New passwords do not match.";
+                return;
+            }
+            
+            if (newPassword.length < 6) {
+                changePasswordErrorMessage.textContent = "New password must be at least 6 characters long.";
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}/change-password`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ currentPassword, newPassword })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to change password.');
+                }
+                
+                // On success, log out the user for security
+                localStorage.removeItem('authToken');
+                updateUIForPublic();
+                changePasswordModal.style.display = 'none';
+                changePasswordForm.reset();
+                alert("Password changed successfully. Please log in with your new password.");
+                
+            } catch (error) {
+                console.error("Change password failed:", error);
+                changePasswordErrorMessage.textContent = error.message;
+            }
+        });
+
+        // Initial app setup
+        checkAuthStatus();
+    </script>
+</body>
+</html>
+
