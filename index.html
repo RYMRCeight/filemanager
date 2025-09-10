@@ -174,15 +174,29 @@
         const changePasswordErrorMessage = document.getElementById('change-password-error-message');
 
         // IMPORTANT: In a real app, this API_URL would be your Vercel deployment URL
+        // With this local version, we will no longer use a remote API.
         const API_URL = 'https://your-vercel-project.vercel.app/api';
 
         let authToken = null;
+        
+        // This simulates a local, persistent database using localStorage.
+        // WARNING: Storing credentials like this is extremely insecure and should NEVER be done in a real application.
+        const DB_KEY = 'localDB';
+        const AUTH_KEY = 'authToken';
 
+        const getLocalDB = () => {
+            const dbString = localStorage.getItem(DB_KEY);
+            return dbString ? JSON.parse(dbString) : { admin: { email: 'admin@example.com', password: 'password123' }, documents: [] };
+        };
+
+        const saveLocalDB = (db) => {
+            localStorage.setItem(DB_KEY, JSON.stringify(db));
+        };
+        
         // Function to check auth state on page load
         const checkAuthStatus = () => {
-            authToken = localStorage.getItem('authToken');
+            authToken = localStorage.getItem(AUTH_KEY);
             if (authToken) {
-                // If a token exists, assume we are logged in and show admin view
                 updateUIForAdmin();
                 loadDocuments();
             } else {
@@ -207,21 +221,12 @@
             documentList.innerHTML = '<p class="text-gray-500 text-center">Please log in as an administrator to view and add documents.</p>';
         };
 
-        // Function to load documents from the backend
-        const loadDocuments = async () => {
+        // Function to load documents from the local database
+        const loadDocuments = () => {
             loadingMessage.textContent = 'Loading documents...';
             try {
-                const response = await fetch(`${API_URL}/documents`, {
-                    headers: {
-                        'Authorization': `Bearer ${authToken}`
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to fetch documents. Your session may have expired.');
-                }
-
-                const documents = await response.json();
+                const db = getLocalDB();
+                const documents = db.documents;
                 renderDocuments(documents);
             } catch (error) {
                 console.error("Error loading documents:", error);
@@ -257,7 +262,7 @@
         };
 
         // Form submission handler
-        addForm.addEventListener('submit', async (e) => {
+        addForm.addEventListener('submit', (e) => {
             e.preventDefault();
 
             if (!authToken) {
@@ -272,18 +277,9 @@
             const googleDriveLink = document.getElementById('google-drive-link').value;
 
             try {
-                const response = await fetch(`${API_URL}/documents`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${authToken}`
-                    },
-                    body: JSON.stringify({ ordinanceNumber, title, date, googleDriveLink })
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to add document.');
-                }
+                const db = getLocalDB();
+                db.documents.push({ ordinanceNumber, title, date, googleDriveLink });
+                saveLocalDB(db);
 
                 formMessage.textContent = 'Document added successfully!';
                 formMessage.style.color = 'green';
@@ -311,7 +307,7 @@
         });
         
         logoutButton.addEventListener('click', () => {
-            localStorage.removeItem('authToken');
+            localStorage.removeItem(AUTH_KEY);
             updateUIForPublic();
             console.log('User signed out.');
         });
@@ -326,39 +322,30 @@
             changePasswordErrorMessage.textContent = '';
         });
 
-        loginForm.addEventListener('submit', async (e) => {
+        loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const email = emailInput.value;
             const password = passwordInput.value;
             loginErrorMessage.textContent = '';
-            try {
-                const response = await fetch(`${API_URL}/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Login failed.');
-                }
-
-                const data = await response.json();
-                authToken = data.token;
-                localStorage.setItem('authToken', authToken);
+            
+            const db = getLocalDB();
+            
+            if (email === db.admin.email && password === db.admin.password) {
+                // Generate a simple token for local storage
+                authToken = 'local-admin-token-123';
+                localStorage.setItem(AUTH_KEY, authToken);
 
                 loginModal.style.display = 'none';
                 loginForm.reset();
                 updateUIForAdmin();
-                loadDocuments(); // Load docs after successful login
+                loadDocuments();
                 console.log('Admin login successful.');
-            } catch (error) {
-                console.error("Login failed:", error);
-                loginErrorMessage.textContent = error.message;
+            } else {
+                loginErrorMessage.textContent = "Invalid email or password.";
             }
         });
         
-        changePasswordForm.addEventListener('submit', async (e) => {
+        changePasswordForm.addEventListener('submit', (e) => {
             e.preventDefault();
             changePasswordErrorMessage.textContent = '';
             
@@ -376,31 +363,20 @@
                 return;
             }
             
-            try {
-                const response = await fetch(`${API_URL}/change-password`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${authToken}`
-                    },
-                    body: JSON.stringify({ currentPassword, newPassword })
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Failed to change password.');
-                }
+            const db = getLocalDB();
+            
+            if (currentPassword === db.admin.password) {
+                db.admin.password = newPassword;
+                saveLocalDB(db);
                 
                 // On success, log out the user for security
-                localStorage.removeItem('authToken');
+                localStorage.removeItem(AUTH_KEY);
                 updateUIForPublic();
                 changePasswordModal.style.display = 'none';
                 changePasswordForm.reset();
                 alert("Password changed successfully. Please log in with your new password.");
-                
-            } catch (error) {
-                console.error("Change password failed:", error);
-                changePasswordErrorMessage.textContent = error.message;
+            } else {
+                changePasswordErrorMessage.textContent = "Incorrect current password.";
             }
         });
 
@@ -409,4 +385,3 @@
     </script>
 </body>
 </html>
-
