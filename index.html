@@ -3,654 +3,747 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ordinance & Resolution Manager</title>
+    <title>Executive File Manager</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
+            @apply bg-gray-100 text-gray-800;
         }
-        .container {
-            max-width: 900px;
-        }
-        .modal {
-            display: none;
+        .modal-overlay {
             position: fixed;
-            z-index: 100;
-            left: 0;
             top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            overflow: auto;
-            background-color: rgb(0,0,0);
-            background-color: rgba(0,0,0,0.4);
-        }
-        .modal-content {
-            background-color: #fefefe;
-            margin: 15% auto;
-            padding: 24px;
-            border-radius: 8px;
-            width: 90%;
-            max-width: 400px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            animation-name: animatetop;
-            animation-duration: 0.4s;
-        }
-        @keyframes animatetop {
-            from {top: -300px; opacity: 0}
-            to {top: 0; opacity: 1}
-        }
-        .admin-controls {
+            background-color: #1f2937; /* Solid dark gray background */
             display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+        }
+        .modal {
+            @apply bg-white p-6 rounded-lg shadow-xl max-w-lg w-full transform transition-transform duration-300 scale-95;
+        }
+        .modal-open {
+            display: flex;
+        }
+        .modal-open .modal {
+            transform: scale(1);
         }
     </style>
 </head>
-<body>
-    <div class="container mx-auto p-4 md:p-8">
-        <header class="text-center mb-8">
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-2">Ordinance & Resolution Manager</h1>
-            <p class="text-gray-600">Securely store and link public documents.</p>
+<body class="min-h-screen flex flex-col items-center p-4">
+
+    <!-- Main Application Container -->
+    <div class="w-full max-w-4xl bg-white rounded-xl shadow-lg p-6 md:p-8 space-y-6">
+
+        <!-- Header and Login/Logout Button -->
+        <header class="flex flex-col md:flex-row justify-between items-center pb-4 border-b border-gray-200">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2 md:mb-0">Executive File Manager</h1>
+            <div class="flex items-center space-x-2">
+                <span id="userIdDisplay" class="text-sm text-gray-500 font-medium hidden"></span>
+                <button id="authButton" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-5 rounded-full transition-colors duration-200">
+                    Login
+                </button>
+            </div>
         </header>
 
-        <!-- Current User Info & Action Buttons -->
-        <div id="auth-status" class="bg-gray-100 p-4 rounded-lg shadow mb-6 text-sm text-gray-700 flex justify-between items-center">
-            <p id="user-info">Authenticating...</p>
-            <div id="auth-buttons" class="space-x-2">
-                <button id="login-button" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">Log In</button>
-                <button id="logout-button" class="bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors" style="display: none;">Log Out</button>
-                <button id="change-password-button" class="bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg shadow-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors" style="display: none;">Change Password</button>
-            </div>
-        </div>
-        
-        <!-- App-level message display -->
-        <div id="status-message" class="text-center text-sm p-2 rounded-md mb-4" style="display: none;"></div>
+        <!-- Main Content Area -->
+        <main class="space-y-8">
 
-        <!-- Add Document Form (Admin Only) -->
-        <section id="admin-form-section" class="bg-white p-6 rounded-xl shadow-lg mb-8" style="display: none;">
-            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Add New Document</h2>
-            <form id="add-form" class="space-y-4">
-                <div>
-                    <label for="ordinance-number" class="block text-gray-700 font-medium mb-1">Ordinance/Resolution Number</label>
-                    <input type="text" id="ordinance-number" name="ordinance-number" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., Ord. No. 2024-123" required>
+            <!-- Public Document List -->
+            <section>
+                <h2 class="text-2xl font-semibold text-gray-900 mb-4">Public Documents <span class="text-base text-gray-500 font-normal">(Sorted by date, newest first)</span></h2>
+                <div id="documentsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Documents will be dynamically inserted here -->
                 </div>
-                <div>
-                    <label for="category" class="block text-gray-700 font-medium mb-1">Document Type</label>
-                    <div class="flex items-center space-x-2">
-                        <select id="category" name="category" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <!-- Options will be populated by JS -->
-                        </select>
+            </section>
+
+            <!-- Admin Section (Hidden by Default) -->
+            <section id="adminSection" class="hidden">
+                <h2 class="text-2xl font-semibold text-gray-900 mb-4">Admin Panel</h2>
+                
+                <!-- Manage Categories Section -->
+                <div class="bg-gray-50 p-6 rounded-xl shadow-inner space-y-4 mb-6">
+                    <h3 class="text-xl font-medium text-gray-700">Manage Categories</h3>
+                    
+                    <!-- Add New Category -->
+                    <div class="flex flex-col md:flex-row md:items-end gap-4">
+                        <div class="flex-grow flex flex-col">
+                            <label for="newCategoryInput" class="text-sm font-medium text-gray-600">Add New Category</label>
+                            <input type="text" id="newCategoryInput" placeholder="Enter category name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        </div>
+                        <button type="button" id="addCategoryButton" class="w-full md:w-auto bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-5 rounded-md transition-colors duration-200">
+                            Add Category
+                        </button>
+                    </div>
+
+                    <!-- Existing Categories List -->
+                    <div>
+                        <h4 class="text-lg font-medium text-gray-700 mb-2">Your Custom Categories</h4>
+                        <div id="categoriesList" class="space-y-2">
+                            <!-- Categories will be dynamically inserted here -->
+                        </div>
                     </div>
                 </div>
-                <div>
-                    <label for="title" class="block text-gray-700 font-medium mb-1">Title</label>
-                    <input type="text" id="title" name="title" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., Parks and Recreation Act" required>
-                </div>
-                <div>
-                    <label for="date" class="block text-gray-700 font-medium mb-1">Date</label>
-                    <input type="date" id="date" name="date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                </div>
-                <div>
-                    <label for="google-drive-link" class="block text-gray-700 font-medium mb-1">Google Drive Link / Document URL</label>
-                    <input type="url" id="google-drive-link" name="google-drive-link" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., https://drive.google.com/..." required>
-                </div>
-                <div>
-                    <label for="status" class="block text-gray-700 font-medium mb-1">Status</label>
-                    <select id="status" name="status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="Completed">Completed</option>
-                        <option value="Pending">Pending</option>
-                        <option value="Custom Remarks">Custom Remarks</option>
-                    </select>
-                </div>
-                <div id="custom-remarks-container" style="display: none;">
-                    <label for="custom-remarks" class="block text-gray-700 font-medium mb-1">Custom Remarks</label>
-                    <input type="text" id="custom-remarks" name="custom-remarks" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter custom status remarks">
-                </div>
-                <div class="flex items-center space-x-2">
-                    <button type="submit" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
+
+                <!-- Add/Edit Document Form -->
+                <form id="documentForm" class="bg-gray-50 p-6 rounded-xl shadow-inner space-y-4">
+                    <h3 id="formTitle" class="text-xl font-medium text-gray-700">Add New Document</h3>
+                    <input type="hidden" id="documentId">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="flex flex-col">
+                            <label for="ordinanceNumber" class="text-sm font-medium text-gray-600">Ordinance Number</label>
+                            <input type="text" id="ordinanceNumber" required placeholder="e.g., EO-2023-01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        </div>
+                        <div class="flex flex-col">
+                            <label for="category" class="text-sm font-medium text-gray-600">Category</label>
+                            <select id="category" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                <!-- Categories will be dynamically populated here -->
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col">
+                        <label for="title" class="text-sm font-medium text-gray-600">Title</label>
+                        <input type="text" id="title" required placeholder="Enter document title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="flex flex-col">
+                            <label for="date" class="text-sm font-medium text-gray-600">Date</label>
+                            <input type="date" id="date" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        </div>
+                        <div class="flex flex-col">
+                            <label for="googleDriveLink" class="text-sm font-medium text-gray-600">Google Drive Link</label>
+                            <input type="url" id="googleDriveLink" required placeholder="https://drive.google.com/..." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col">
+                        <label for="status" class="text-sm font-medium text-gray-600">Status</label>
+                        <select id="status" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <option value="Completed">Completed</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Custom Remarks">Custom Remarks</option>
+                        </select>
+                    </div>
+
+                    <div id="customRemarksContainer" class="flex flex-col hidden">
+                        <label for="customRemarks" class="text-sm font-medium text-gray-600">Custom Remarks</label>
+                        <input type="text" id="customRemarks" placeholder="Enter custom remarks" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+
+                    <button type="submit" id="submitButton" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-md transition-colors duration-200">
                         Add Document
                     </button>
-                    <span id="form-message" class="text-sm"></span>
-                </div>
-            </form>
-        </section>
-
-        <!-- Document List -->
-        <section class="bg-white p-6 rounded-xl shadow-lg">
-            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Current Documents</h2>
-            <div id="document-list" class="space-y-4">
-                <p id="loading-message" class="text-gray-500 text-center">Loading documents...</p>
-                <!-- Documents will be dynamically inserted here -->
-            </div>
-        </section>
+                </form>
+            </section>
+        </main>
     </div>
 
-    <!-- The Login Modal -->
-    <div id="login-modal" class="modal">
-        <div class="modal-content">
-            <h3 class="text-xl font-semibold text-gray-800 mb-4">Admin Login</h3>
-            <p class="text-sm text-gray-600 mb-4">Please log in with your admin credentials to manage documents.</p>
-            <form id="login-form" class="space-y-4">
-                <div>
-                    <label for="email" class="block text-gray-700 font-medium mb-1">Email</label>
-                    <input type="email" id="email" name="email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="admin@example.com" required>
-                </div>
-                <div>
-                    <label for="password" class="block text-gray-700 font-medium mb-1">Password</label>
-                    <input type="password" id="password" name="password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="password123" required>
-                </div>
-                <div class="flex justify-end space-x-2 mt-4">
-                    <button type="button" id="cancel-login" class="bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors">Cancel</button>
-                    <button type="submit" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">Log In</button>
-                </div>
+    <!-- Modals -->
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal-overlay">
+        <div class="modal space-y-4">
+            <h3 class="text-xl font-bold text-white">Admin Login</h3>
+            <form id="loginForm" class="space-y-4">
+                <input type="email" id="email" required placeholder="Email" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <input type="password" id="password" required placeholder="Password" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-md transition-colors duration-200">
+                    Login
+                </button>
+                <a href="#" id="forgotPasswordLink" class="text-xs text-indigo-600 hover:text-indigo-800 transition-colors duration-200 mt-2 block text-center">Forgot Password?</a>
             </form>
-            <p id="login-error-message" class="text-sm text-red-500 mt-2"></p>
+            <button id="closeLoginModal" class="absolute top-2 right-2 text-gray-400 hover:text-gray-600 transition-colors duration-200">&times;</button>
         </div>
     </div>
     
-    <!-- The Change Password Modal -->
-    <div id="change-password-modal" class="modal">
-        <div class="modal-content">
-            <h3 class="text-xl font-semibold text-gray-800 mb-4">Change Password</h3>
-            <p class="text-sm text-gray-600 mb-4">Enter your current password and your new password.</p>
-            <form id="change-password-form" class="space-y-4">
-                <div>
-                    <label for="current-password" class="block text-gray-700 font-medium mb-1">Current Password</label>
-                    <input type="password" id="current-password" name="current-password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                </div>
-                <div>
-                    <label for="new-password" class="block text-gray-700 font-medium mb-1">New Password</label>
-                    <input type="password" id="new-password" name="new-password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                </div>
-                <div>
-                    <label for="confirm-new-password" class="block text-gray-700 font-medium mb-1">Confirm New Password</label>
-                    <input type="password" id="confirm-new-password" name="confirm-new-password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                </div>
-                <div class="flex justify-end space-x-2 mt-4">
-                    <button type="button" id="cancel-change-password" class="bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors">Cancel</button>
-                    <button type="submit" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">Confirm Change</button>
-                </div>
+    <!-- Forgot Password Modal -->
+    <div id="forgotPasswordModal" class="modal-overlay">
+        <div class="modal space-y-4">
+            <h3 class="text-xl font-bold text-gray-900">Forgot Password</h3>
+            <p class="text-sm text-gray-600">Enter your email to receive a password reset link.</p>
+            <form id="forgotPasswordForm" class="space-y-4">
+                <input type="email" id="resetEmail" required placeholder="Email" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <div id="resetMessage" class="text-sm font-medium text-center hidden"></div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-md transition-colors duration-200">
+                    Send Reset Link
+                </button>
             </form>
-            <p id="change-password-error-message" class="text-sm text-red-500 mt-2"></p>
+            <button id="closeForgotPasswordModal" class="absolute top-2 right-2 text-gray-400 hover:text-gray-600 transition-colors duration-200">&times;</button>
         </div>
     </div>
-    
-    <!-- The Edit Document Modal -->
-    <div id="edit-modal" class="modal">
-        <div class="modal-content">
-            <h3 class="text-xl font-semibold text-gray-800 mb-4">Edit Document</h3>
-            <form id="edit-form" class="space-y-4">
-                <input type="hidden" id="edit-document-id">
-                <div>
-                    <label for="edit-ordinance-number" class="block text-gray-700 font-medium mb-1">Ordinance/Resolution Number</label>
-                    <input type="text" id="edit-ordinance-number" name="ordinance-number" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                </div>
-                <div>
-                    <label for="edit-category" class="block text-gray-700 font-medium mb-1">Document Type</label>
-                    <select id="edit-category" name="edit-category" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <!-- Options will be populated by JS -->
-                    </select>
-                </div>
-                <div>
-                    <label for="edit-title" class="block text-gray-700 font-medium mb-1">Title</label>
-                    <input type="text" id="edit-title" name="title" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                </div>
-                <div>
-                    <label for="edit-date" class="block text-gray-700 font-medium mb-1">Date</label>
-                    <input type="date" id="edit-date" name="date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                </div>
-                <div>
-                    <label for="edit-google-drive-link" class="block text-gray-700 font-medium mb-1">Google Drive Link / Document URL</label>
-                    <input type="url" id="edit-google-drive-link" name="google-drive-link" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                </div>
-                <div>
-                    <label for="edit-status" class="block text-gray-700 font-medium mb-1">Status</label>
-                    <select id="edit-status" name="edit-status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="Completed">Completed</option>
-                        <option value="Pending">Pending</option>
-                        <option value="Custom Remarks">Custom Remarks</option>
-                    </select>
-                </div>
-                <div id="edit-custom-remarks-container" style="display: none;">
-                    <label for="edit-custom-remarks" class="block text-gray-700 font-medium mb-1">Custom Remarks</label>
-                    <input type="text" id="edit-custom-remarks" name="edit-custom-remarks" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter custom status remarks">
-                </div>
-                <div class="flex justify-end space-x-2 mt-4">
-                    <button type="button" id="cancel-edit" class="bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors">Cancel</button>
-                    <button type="submit" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">Save Changes</button>
-                </div>
-            </form>
-            <p id="edit-message" class="text-sm mt-2"></p>
-        </div>
-    </div>
-    
-    <!-- The Delete Confirmation Modal -->
-    <div id="delete-modal" class="modal">
-        <div class="modal-content">
-            <h3 class="text-xl font-semibold text-gray-800 mb-4">Confirm Deletion</h3>
-            <p class="text-sm text-gray-600 mb-4">Are you sure you want to delete this document? This action cannot be undone.</p>
-            <div class="flex justify-end space-x-2 mt-4">
-                <button type="button" id="cancel-delete" class="bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors">Cancel</button>
-                <button type="button" id="confirm-delete" class="bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition-colors">Delete</button>
+
+    <!-- Delete Confirmation Modal (Re-used for Documents and Categories) -->
+    <div id="deleteModal" class="modal-overlay">
+        <div class="modal space-y-4">
+            <h3 class="text-xl font-bold text-gray-900">Confirm Deletion</h3>
+            <p id="deleteMessage">Are you sure you want to delete this document? This action cannot be undone.</p>
+            <div id="deleteError" class="text-sm text-red-500 font-medium text-center hidden"></div>
+            <div class="flex justify-end space-x-2">
+                <button id="cancelDeleteButton" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded-md transition-colors duration-200">Cancel</button>
+                <button id="confirmDeleteButton" class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200">Delete</button>
             </div>
         </div>
     </div>
 
+    <!-- Rename Category Modal -->
+    <div id="renameCategoryModal" class="modal-overlay">
+        <div class="modal space-y-4">
+            <h3 class="text-xl font-bold text-gray-900">Rename Category</h3>
+            <form id="renameCategoryForm" class="space-y-4">
+                <input type="hidden" id="renameCategoryId">
+                <input type="text" id="renameCategoryInput" required class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <div class="flex justify-end space-x-2">
+                    <button type="button" id="cancelRenameButton" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded-md transition-colors duration-200">Cancel</button>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200">
+                        Rename
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- Firebase SDK Imports -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, signOut, reauthenticateWithCredential, EmailAuthProvider, updatePassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, query, addDoc, doc, updateDoc, deleteDoc, getDoc, setDoc, getDocs, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
-        // UI Elements
-        const addForm = document.getElementById('add-form');
-        const adminFormSection = document.getElementById('admin-form-section');
-        const documentList = document.getElementById('document-list');
-        const formMessage = document.getElementById('form-message');
-        const loadingMessage = document.getElementById('loading-message');
-        const userInfo = document.getElementById('user-info');
-        const loginButton = document.getElementById('login-button');
-        const logoutButton = document.getElementById('logout-button');
-        const changePasswordButton = document.getElementById('change-password-button');
-        const loginModal = document.getElementById('login-modal');
-        const loginForm = document.getElementById('login-form');
-        const emailInput = document.getElementById('email');
-        const passwordInput = document.getElementById('password');
-        const cancelLoginButton = document.getElementById('cancel-login');
-        const loginErrorMessage = document.getElementById('login-error-message');
-        const changePasswordModal = document.getElementById('change-password-modal');
-        const changePasswordForm = document.getElementById('change-password-form');
-        const currentPasswordInput = document.getElementById('current-password');
-        const newPasswordInput = document.getElementById('new-password');
-        const confirmNewPasswordInput = document.getElementById('confirm-new-password');
-        const cancelChangePasswordButton = document.getElementById('cancel-change-password');
-        const changePasswordErrorMessage = document.getElementById('change-password-error-message');
-        const categoryDropdown = document.getElementById('category');
-        const statusDropdown = document.getElementById('status');
-        const customRemarksContainer = document.getElementById('custom-remarks-container');
-        const customRemarksInput = document.getElementById('custom-remarks');
-        const statusMessage = document.getElementById('status-message');
-
-        // Edit Modal Elements
-        const editModal = document.getElementById('edit-modal');
-        const editForm = document.getElementById('edit-form');
-        const editDocumentId = document.getElementById('edit-document-id');
-        const editOrdinanceNumber = document.getElementById('edit-ordinance-number');
-        const editCategoryDropdown = document.getElementById('edit-category');
-        const editTitle = document.getElementById('edit-title');
-        const editDate = document.getElementById('edit-date');
-        const editGoogleDriveLink = document.getElementById('edit-google-drive-link');
-        const editStatusDropdown = document.getElementById('edit-status');
-        const editCustomRemarksContainer = document.getElementById('edit-custom-remarks-container');
-        const editCustomRemarksInput = document.getElementById('edit-custom-remarks');
-        const cancelEditButton = document.getElementById('cancel-edit');
-        const editMessage = document.getElementById('edit-message');
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, doc, getDoc, addDoc, updateDoc, deleteDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
-        // Delete Confirmation Modal
-        const deleteModal = document.getElementById('delete-modal');
-        const cancelDeleteButton = document.getElementById('cancel-delete');
-        const confirmDeleteButton = document.getElementById('confirm-delete');
-        let docToDeleteId = null;
-
-        // Firebase Initialization
-        let app, db, auth, userId;
-        let categories = ['Executive Order', 'Certified as Urgent'];
-        let isAdmin = false;
-
-        const showMessage = (element, message, isError = false) => {
-            element.textContent = message;
-            element.style.color = isError ? 'red' : 'green';
-            element.style.display = 'block';
-            element.className = isError ? 'bg-red-100 text-red-700 p-2 rounded-md mb-4' : 'bg-green-100 text-green-700 p-2 rounded-md mb-4';
-            element.style.display = 'block';
-            if (isError) {
-              console.error(message);
-            }
+        // --- Firebase Initialization and Auth ---
+        
+        // Mandatory global variables for Canvas environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = {
+          apiKey: "AIzaSyBp65b43DD_05DI6iZ5CZJZnOoT_um4QRA",
+          authDomain: "my-project-4325e.firebaseapp.com",
+          projectId: "my-project-4325e",
+          storageBucket: "my-project-4325e.firebasestorage.app",
+          messagingSenderId: "990130305222",
+          appId: "1:990130305222:web:0de830e1652ea5ed703fc7",
+          measurementId: "G-W7CSTWS8JP"
         };
+        
+        if (Object.keys(firebaseConfig).length === 0) {
+            console.error("Firebase config is not defined. Please check your environment.");
+            // Gracefully exit or show an error to the user
+            document.getElementById('documentsList').innerHTML = `<p class="text-red-500">Firebase is not configured. Please contact the administrator.</p>`;
+            document.getElementById('authButton').disabled = true;
+        }
 
-        const initializeFirebase = async () => {
-            setLogLevel('debug');
-            if (!firebaseConfig.apiKey) {
-                const errorMessage = "Firebase config is not available. Please ensure your project is properly configured.";
-                console.error(errorMessage);
-                showMessage(statusMessage, errorMessage, true);
-                loadingMessage.textContent = 'Configuration error.';
-                return;
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        
+        // Setting Firebase log level to debug for better error tracing
+        setLogLevel('debug');
+        
+        // --- DOM Elements ---
+        const authButton = document.getElementById('authButton');
+        const userIdDisplay = document.getElementById('userIdDisplay');
+        const documentsList = document.getElementById('documentsList');
+        const adminSection = document.getElementById('adminSection');
+        const loginModal = document.getElementById('loginModal');
+        const loginForm = document.getElementById('loginForm');
+        const closeLoginModal = document.getElementById('closeLoginModal');
+        const documentForm = document.getElementById('documentForm');
+        const documentIdInput = document.getElementById('documentId');
+        const formTitle = document.getElementById('formTitle');
+        const submitButton = document.getElementById('submitButton');
+        const deleteModal = document.getElementById('deleteModal');
+        const confirmDeleteButton = document.getElementById('confirmDeleteButton');
+        const cancelDeleteButton = document.getElementById('cancelDeleteButton');
+        const deleteError = document.getElementById('deleteError');
+        const statusSelect = document.getElementById('status');
+        const customRemarksContainer = document.getElementById('customRemarksContainer');
+        const customRemarksInput = document.getElementById('customRemarks');
+        const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+        const forgotPasswordModal = document.getElementById('forgotPasswordModal');
+        const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+        const closeForgotPasswordModal = document.getElementById('closeForgotPasswordModal');
+        const resetMessage = document.getElementById('resetMessage');
+        const categorySelect = document.getElementById('category');
+        const newCategoryInput = document.getElementById('newCategoryInput');
+        const addCategoryButton = document.getElementById('addCategoryButton');
+        const categoriesList = document.getElementById('categoriesList');
+        const renameCategoryModal = document.getElementById('renameCategoryModal');
+        const renameCategoryForm = document.getElementById('renameCategoryForm');
+        const renameCategoryIdInput = document.getElementById('renameCategoryId');
+        const renameCategoryInput = document.getElementById('renameCategoryInput');
+        const cancelRenameButton = document.getElementById('cancelRenameButton');
+        
+        let currentUserId = null;
+        // Variable to hold the unsubscribe function for the Firestore listener
+        let unsubscribeFromFirestore = null;
+        let unsubscribeFromCategories = null;
+
+        // --- Event Listeners and Functions ---
+        
+        // Handle login/logout based on auth state
+        authButton.addEventListener('click', () => {
+            if (currentUserId) {
+                // User is logged in, log them out
+                signOut(auth).then(() => {
+                    console.log("User signed out.");
+                }).catch((error) => {
+                    console.error("Error signing out:", error);
+                });
+            } else {
+                // No user, show login modal
+                loginModal.classList.add('modal-open');
             }
+        });
+        
+        // Handle form submission for login
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = e.target.email.value;
+            const password = e.target.password.value;
+            
+            signInWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    console.log("User logged in:", userCredential.user.uid);
+                    loginModal.classList.remove('modal-open');
+                    loginForm.reset();
+                })
+                .catch((error) => {
+                    console.error("Login failed:", error.message);
+                    // Use a simple text update instead of alert
+                    const errorMessage = loginForm.querySelector('.error-message');
+                    if (errorMessage) errorMessage.remove();
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = "error-message text-center text-sm text-red-500 mt-2";
+                    errorDiv.textContent = "Login failed. Please check your credentials.";
+                    loginForm.appendChild(errorDiv);
+                });
+        });
+
+        // Close login modal
+        closeLoginModal.addEventListener('click', () => {
+            loginModal.classList.remove('modal-open');
+        });
+        
+        // Handle forgot password link click
+        forgotPasswordLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginModal.classList.remove('modal-open');
+            forgotPasswordModal.classList.add('modal-open');
+            resetMessage.textContent = '';
+            resetMessage.classList.add('hidden');
+        });
+        
+        // Close forgot password modal
+        closeForgotPasswordModal.addEventListener('click', () => {
+            forgotPasswordModal.classList.remove('modal-open');
+        });
+
+        // Handle forgot password form submission
+        forgotPasswordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('resetEmail').value;
+            resetMessage.classList.remove('hidden');
+            resetMessage.classList.remove('text-red-500', 'text-green-500');
+
             try {
-                app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                console.log("Firebase services initialized.");
+                await sendPasswordResetEmail(auth, email);
+                resetMessage.textContent = 'Password reset email sent! Check your inbox.';
+                resetMessage.classList.add('text-green-500');
             } catch (error) {
-                console.error("Firebase initialization failed:", error);
-                showMessage(statusMessage, "Failed to initialize Firebase. Please check your configuration.", true);
-                loadingMessage.textContent = 'Initialization failed.';
+                console.error("Password reset failed:", error.message);
+                resetMessage.textContent = 'Failed to send reset email. Please check the email address.';
+                resetMessage.classList.add('text-red-500');
+            }
+        });
+
+        // Handle adding a new category
+        addCategoryButton.addEventListener('click', async () => {
+            const user = auth.currentUser;
+            if (!user) {
+                console.error("Permission denied. You must be an admin to add a category.");
                 return;
             }
             
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    userId = user.uid;
-                    isAdmin = (userId === 'admin_user_id'); // This is a placeholder, a real app would use roles or custom claims
-                    updateUIForUser(user);
-                    subscribeToDocuments();
-                } else {
-                    isAdmin = false;
-                    updateUIForPublic();
-                    subscribeToDocuments(); // Public view
-                }
-            });
-
-            // Initial sign-in
-            try {
-                const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (error) {
-                console.error("Error signing in:", error);
-                await signInAnonymously(auth);
-            }
-        };
-
-        const updateUIForUser = (user) => {
-            userInfo.textContent = `Hello, ${user.isAnonymous ? 'Guest' : 'Admin'}. UID: ${user.uid}`;
-            if (isAdmin) {
-                adminFormSection.style.display = 'block';
-                loginButton.style.display = 'none';
-                logoutButton.style.display = 'block';
-                changePasswordButton.style.display = 'block';
-            } else {
-                adminFormSection.style.display = 'none';
-                loginButton.style.display = 'block';
-                logoutButton.style.display = 'none';
-                changePasswordButton.style.display = 'none';
-            }
-            document.querySelectorAll('.admin-controls').forEach(el => el.style.display = isAdmin ? 'flex' : 'none');
-        };
-
-        const updateUIForPublic = () => {
-            userInfo.textContent = `Not authenticated. Log in as admin.`;
-            adminFormSection.style.display = 'none';
-            loginButton.style.display = 'block';
-            logoutButton.style.display = 'none';
-            changePasswordButton.style.display = 'none';
-            document.querySelectorAll('.admin-controls').forEach(el => el.style.display = 'none');
-        };
-
-        const getDocumentsCollection = () => {
-            const collectionPath = `/artifacts/${appId}/public/data/documents`;
-            return collection(db, collectionPath);
-        };
-
-        const subscribeToDocuments = () => {
-            const q = query(getDocumentsCollection());
-            onSnapshot(q, (querySnapshot) => {
-                const documents = [];
-                querySnapshot.forEach((doc) => {
-                    documents.push({ id: doc.id, ...doc.data() });
-                });
-                renderDocuments(documents);
-            }, (error) => {
-                console.error("Error fetching documents:", error);
-                loadingMessage.textContent = 'Error loading documents.';
-            });
-        };
-
-        const renderCategoryDropdowns = (selectedCategory = null) => {
-            const dropdowns = [categoryDropdown, editCategoryDropdown];
-            dropdowns.forEach(dropdown => {
-                dropdown.innerHTML = '';
-                categories.forEach(category => {
-                    const option = document.createElement('option');
-                    option.value = category;
-                    option.textContent = category;
-                    dropdown.appendChild(option);
-                });
-                if (selectedCategory) {
-                    dropdown.value = selectedCategory;
-                }
-            });
-        };
-
-        const renderDocuments = (documents) => {
-            loadingMessage.textContent = '';
-            documentList.innerHTML = '';
-            if (documents.length === 0) {
-                documentList.innerHTML = '<p class="text-gray-500 text-center">No documents found.</p>';
-            } else {
-                documents.sort((a, b) => new Date(b.date) - new Date(a.date));
-                documents.forEach((doc) => {
-                    const docItem = document.createElement('div');
-                    docItem.className = 'bg-gray-50 p-4 rounded-lg shadow-sm flex flex-col sm:flex-row sm:items-center justify-between';
-                    const statusText = doc.status === 'Custom Remarks' ? doc.customRemarks : doc.status;
-                    docItem.innerHTML = `
-                        <div>
-                            <p class="font-bold text-gray-800 text-lg">${doc.title}</p>
-                            <p class="text-sm text-gray-600"><strong>Type:</strong> ${doc.category}</p>
-                            <p class="text-sm text-gray-600"><strong>Number:</strong> ${doc.ordinanceNumber}</p>
-                            <p class="text-sm text-gray-600"><strong>Date:</strong> ${doc.date}</p>
-                            <p class="text-sm text-gray-600"><strong>Status:</strong> ${statusText}</p>
-                        </div>
-                        <div class="flex space-x-2 mt-4 sm:mt-0">
-                            <a href="${doc.googleDriveLink}" target="_blank" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors text-center shadow">
-                                View Document
-                            </a>
-                            <button class="bg-yellow-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-yellow-600 transition-colors shadow admin-controls edit-button" data-id="${doc.id}">
-                                Edit
-                            </button>
-                            <button class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition-colors shadow admin-controls delete-button" data-id="${doc.id}">
-                                Delete
-                            </button>
-                        </div>
-                    `;
-                    documentList.appendChild(docItem);
-                });
-            }
-        };
-
-        // Toggle custom remarks input based on dropdown selection
-        const toggleCustomRemarks = (dropdown, container) => {
-            if (dropdown.value === 'Custom Remarks') {
-                container.style.display = 'block';
-            } else {
-                container.style.display = 'none';
-            }
-        };
-
-        statusDropdown.addEventListener('change', () => toggleCustomRemarks(statusDropdown, customRemarksContainer));
-        editStatusDropdown.addEventListener('change', () => toggleCustomRemarks(editStatusDropdown, editCustomRemarksContainer));
-
-        addForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!isAdmin) {
-                formMessage.textContent = 'You must be logged in as an admin to add documents.';
-                formMessage.style.color = 'red';
-                return;
-            }
-            try {
-                const newDoc = {
-                    ordinanceNumber: document.getElementById('ordinance-number').value,
-                    category: categoryDropdown.value,
-                    title: document.getElementById('title').value,
-                    date: document.getElementById('date').value,
-                    googleDriveLink: document.getElementById('google-drive-link').value,
-                    status: statusDropdown.value,
-                    customRemarks: statusDropdown.value === 'Custom Remarks' ? customRemarksInput.value : null
-                };
-                await addDoc(getDocumentsCollection(), newDoc);
-                formMessage.textContent = 'Document added successfully!';
-                formMessage.style.color = 'green';
-                addForm.reset();
-                toggleCustomRemarks(statusDropdown, customRemarksContainer);
-                setTimeout(() => { formMessage.textContent = ''; }, 3000);
-            } catch (error) {
-                console.error("Error adding document: ", error);
-                formMessage.textContent = 'Error adding document.';
-                formMessage.style.color = 'red';
-            }
-        });
-
-        documentList.addEventListener('click', async (e) => {
-            if (e.target.classList.contains('edit-button')) {
-                const docId = e.target.getAttribute('data-id');
-                if (!isAdmin) return;
-
-                const docRef = doc(getDocumentsCollection(), docId);
-                const docSnap = await getDoc(docRef);
-
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    editDocumentId.value = docId;
-                    editOrdinanceNumber.value = data.ordinanceNumber;
-                    editCategoryDropdown.value = data.category;
-                    editTitle.value = data.title;
-                    editDate.value = data.date;
-                    editGoogleDriveLink.value = data.googleDriveLink;
-                    editStatusDropdown.value = data.status;
-                    editCustomRemarksInput.value = data.customRemarks || '';
-                    toggleCustomRemarks(editStatusDropdown, editCustomRemarksContainer);
-                    editModal.style.display = 'block';
-                }
-            } else if (e.target.classList.contains('delete-button')) {
-                const docId = e.target.getAttribute('data-id');
-                if (!isAdmin) return;
-                docToDeleteId = docId;
-                deleteModal.style.display = 'block';
-            }
-        });
-
-        editForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const docId = editDocumentId.value;
-            const updatedDoc = {
-                ordinanceNumber: editOrdinanceNumber.value,
-                category: editCategoryDropdown.value,
-                title: editTitle.value,
-                date: editDate.value,
-                googleDriveLink: editGoogleDriveLink.value,
-                status: editStatusDropdown.value,
-                customRemarks: editStatusDropdown.value === 'Custom Remarks' ? editCustomRemarksInput.value : null
-            };
-            try {
-                const docRef = doc(getDocumentsCollection(), docId);
-                await updateDoc(docRef, updatedDoc);
-                editModal.style.display = 'none';
-                editMessage.textContent = 'Document updated successfully!';
-                editMessage.style.color = 'green';
-                setTimeout(() => { editMessage.textContent = ''; }, 3000);
-            } catch (error) {
-                console.error("Error updating document:", error);
-                editMessage.textContent = 'Error updating document.';
-                editMessage.style.color = 'red';
-            }
-        });
-
-        confirmDeleteButton.addEventListener('click', async () => {
-            if (docToDeleteId) {
+            const newCategory = newCategoryInput.value.trim();
+            if (newCategory) {
                 try {
-                    await deleteDoc(doc(getDocumentsCollection(), docToDeleteId));
-                    deleteModal.style.display = 'none';
-                    docToDeleteId = null;
-                } catch (error) {
-                    console.error("Error deleting document:", error);
-                    deleteModal.style.display = 'none';
+                    const categoriesCollection = collection(db, `artifacts/${appId}/public/data/categories`);
+                    await addDoc(categoriesCollection, { name: newCategory });
+                    newCategoryInput.value = '';
+                    console.log("Category added successfully!");
+                } catch (e) {
+                    console.error("Error adding category: ", e);
                 }
             }
         });
 
-        // Modal close handlers
-        cancelLoginButton.addEventListener('click', () => { loginModal.style.display = 'none'; });
-        cancelChangePasswordButton.addEventListener('click', () => { changePasswordModal.style.display = 'none'; });
-        cancelEditButton.addEventListener('click', () => { editModal.style.display = 'none'; });
-        cancelDeleteButton.addEventListener('click', () => { deleteModal.style.display = 'none'; docToDeleteId = null; });
-
-        // Login/Logout button handlers
-        loginButton.addEventListener('click', () => { loginModal.style.display = 'block'; });
-        logoutButton.addEventListener('click', async () => {
-            try {
-                await signOut(auth);
-            } catch (error) {
-                console.error("Error signing out:", error);
+        // Toggle custom remarks input based on status selection
+        statusSelect.addEventListener('change', (e) => {
+            if (e.target.value === 'Custom Remarks') {
+                customRemarksContainer.classList.remove('hidden');
+                customRemarksInput.required = true;
+            } else {
+                customRemarksContainer.classList.add('hidden');
+                customRemarksInput.required = false;
             }
         });
-        changePasswordButton.addEventListener('click', () => { changePasswordModal.style.display = 'block'; });
 
-        loginForm.addEventListener('submit', async (e) => {
+        // Handle form submission for adding/updating documents
+        documentForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            console.log("Attempting login via Email/Password...");
-            const email = emailInput.value;
-            const password = passwordInput.value;
-            loginErrorMessage.textContent = '';
-
-            try {
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-                if (user) {
-                    // For demo purposes, we'll assume a specific admin UID
-                    // In a real app, you would use custom claims to check for admin role
-                    if (user.uid === 'admin_user_id') {
-                         loginModal.style.display = 'none';
-                         loginForm.reset();
-                         updateUIForUser(user);
-                    } else {
-                        loginErrorMessage.textContent = 'You do not have admin permissions.';
-                        await signOut(auth);
-                    }
-                }
-            } catch (error) {
-                console.error("Login error:", error);
-                if (error.code === 'auth/operation-not-allowed') {
-                  loginErrorMessage.textContent = 'Email/Password sign-in is not enabled. Please enable it in your Firebase project settings.';
-                } else if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
-                  loginErrorMessage.textContent = 'Invalid email or password.';
-                } else {
-                  loginErrorMessage.textContent = 'An unexpected error occurred. Please try again later.';
-                }
-            }
-        });
-
-        changePasswordForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            changePasswordErrorMessage.textContent = '';
-            const currentPassword = currentPasswordInput.value;
-            const newPassword = newPasswordInput.value;
+            
             const user = auth.currentUser;
-
-            if (newPassword !== confirmNewPasswordInput.value) {
-                changePasswordErrorMessage.textContent = "New passwords do not match.";
-                return;
-            }
-            if (newPassword.length < 6) {
-                changePasswordErrorMessage.textContent = "New password must be at least 6 characters long.";
+            if (!user) {
+                console.error("Permission denied. You must be an admin to add/edit a document.");
                 return;
             }
 
-            const credential = EmailAuthProvider.credential(user.email, currentPassword);
+            const docId = documentIdInput.value;
+            const docData = {
+                ordinanceNumber: document.getElementById('ordinanceNumber').value,
+                category: document.getElementById('category').value,
+                title: document.getElementById('title').value,
+                date: document.getElementById('date').value,
+                googleDriveLink: document.getElementById('googleDriveLink').value,
+                status: statusSelect.value,
+                customRemarks: customRemarksInput.value || ""
+            };
+            
             try {
-                await reauthenticateWithCredential(user, credential);
-                await updatePassword(user, newPassword);
-                changePasswordModal.style.display = 'none';
-                changePasswordForm.reset();
-                showMessage(statusMessage, "Password changed successfully. Please log in with your new password.");
-                await signOut(auth);
-            } catch (error) {
-                console.error("Password change error:", error);
-                if (error.code === 'auth/wrong-password') {
-                    changePasswordErrorMessage.textContent = "Incorrect current password.";
+                if (docId) {
+                    // Update existing document
+                    const docRef = doc(db, `artifacts/${appId}/public/data/documents`, docId);
+                    await updateDoc(docRef, docData);
+                    console.log("Document updated successfully!");
                 } else {
-                    changePasswordErrorMessage.textContent = "Error changing password.";
+                    // Add new document
+                    const docRef = collection(db, `artifacts/${appId}/public/data/documents`);
+                    await addDoc(docRef, docData);
+                    console.log("Document added successfully!");
                 }
+                
+                // Reset the form
+                documentForm.reset();
+                documentIdInput.value = '';
+                formTitle.textContent = 'Add New Document';
+                submitButton.textContent = 'Add Document';
+                customRemarksContainer.classList.add('hidden');
+                customRemarksInput.required = false;
+
+            } catch (e) {
+                console.error("Error adding/updating document: ", e);
             }
         });
         
-        // Initial setup
-        initializeFirebase();
-        renderCategoryDropdowns();
+        // Function to render documents to the UI
+        function renderDocuments(documents) {
+            documentsList.innerHTML = '';
+            
+            if (documents.length === 0) {
+                documentsList.innerHTML = `<p class="text-center text-gray-500 col-span-full">No documents found.</p>`;
+                return;
+            }
+
+            documents.forEach(doc => {
+                const docCard = document.createElement('div');
+                docCard.className = `relative bg-white border border-gray-200 rounded-lg p-5 shadow-sm space-y-2 hover:shadow-md transition-shadow duration-200`;
+                docCard.innerHTML = `
+                    <h4 class="text-lg font-semibold text-gray-900">${doc.title}</h4>
+                    <p class="text-sm text-gray-600"><strong>Ordinance:</strong> ${doc.ordinanceNumber}</p>
+                    <p class="text-sm text-gray-600"><strong>Category:</strong> ${doc.category}</p>
+                    <p class="text-sm text-gray-600"><strong>Date:</strong> ${new Date(doc.date).toLocaleDateString()}</p>
+                    <p class="text-sm font-medium ${doc.status === 'Completed' ? 'text-green-600' : 'text-yellow-600'}"><strong>Status:</strong> ${doc.status}</p>
+                    ${doc.status === 'Custom Remarks' && doc.customRemarks ? `<p class="text-xs text-gray-500 italic mt-1">"${doc.customRemarks}"</p>` : ''}
+                    <div class="pt-2 border-t border-gray-100 mt-2">
+                        <a href="${doc.googleDriveLink}" target="_blank" class="inline-flex items-center text-indigo-600 hover:text-indigo-800 transition-colors duration-200">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                            View Document
+                        </a>
+                    </div>
+                `;
+
+                if (currentUserId) {
+                    const adminActions = document.createElement('div');
+                    adminActions.className = "flex space-x-2 absolute top-4 right-4";
+                    adminActions.innerHTML = `
+                        <button class="edit-doc-btn text-blue-500 hover:text-blue-700 transition-colors duration-200" data-id="${doc.id}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                            </svg>
+                        </button>
+                        <button class="delete-doc-btn text-red-500 hover:text-red-700 transition-colors duration-200" data-id="${doc.id}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    `;
+                    docCard.appendChild(adminActions);
+                }
+                
+                documentsList.appendChild(docCard);
+            });
+            
+            // Add listeners for edit/delete buttons after rendering
+            if (currentUserId) {
+                document.querySelectorAll('.edit-doc-btn').forEach(button => {
+                    button.addEventListener('click', () => editDocument(button.dataset.id));
+                });
+                document.querySelectorAll('.delete-doc-btn').forEach(button => {
+                    button.addEventListener('click', () => openDeleteModal(button.dataset.id, 'document'));
+                });
+            }
+        }
+        
+        // Open delete confirmation modal
+        function openDeleteModal(itemId, itemType) {
+            deleteModal.classList.add('modal-open');
+            confirmDeleteButton.dataset.id = itemId;
+            confirmDeleteButton.dataset.type = itemType;
+            deleteError.classList.add('hidden');
+            document.getElementById('deleteMessage').textContent = `Are you sure you want to delete this ${itemType}? This action cannot be undone.`;
+        }
+
+        // Close delete modal and handle cancel
+        cancelDeleteButton.addEventListener('click', () => {
+            deleteModal.classList.remove('modal-open');
+        });
+
+        // Handle delete confirmation
+        confirmDeleteButton.addEventListener('click', async () => {
+            const user = auth.currentUser;
+            if (!user) {
+                deleteError.textContent = "Permission denied. You must be an admin to delete.";
+                deleteError.classList.remove('hidden');
+                console.error("Permission denied. No user logged in.");
+                return;
+            }
+            
+            const itemId = confirmDeleteButton.dataset.id;
+            const itemType = confirmDeleteButton.dataset.type;
+            
+            try {
+                if (itemType === 'document') {
+                    const docRef = doc(db, `artifacts/${appId}/public/data/documents`, itemId);
+                    await deleteDoc(docRef);
+                    console.log("Document deleted successfully!");
+                } else if (itemType === 'category') {
+                    const docRef = doc(db, `artifacts/${appId}/public/data/categories`, itemId);
+                    await deleteDoc(docRef);
+                    console.log("Category deleted successfully!");
+                }
+                deleteModal.classList.remove('modal-open');
+            } catch (e) {
+                console.error(`Error deleting ${itemType}: `, e);
+                deleteError.textContent = `Error: ${e.message}. Deletion failed.`;
+                deleteError.classList.remove('hidden');
+            }
+        });
+
+        // Function to load document data into the form for editing
+        async function editDocument(docId) {
+            try {
+                const docRef = doc(db, `artifacts/${appId}/public/data/documents`, docId);
+                const docSnap = await getDoc(docRef);
+                
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    documentIdInput.value = docId;
+                    formTitle.textContent = 'Edit Document';
+                    submitButton.textContent = 'Update Document';
+                    
+                    document.getElementById('ordinanceNumber').value = data.ordinanceNumber;
+                    document.getElementById('category').value = data.category;
+                    document.getElementById('title').value = data.title;
+                    document.getElementById('date').value = data.date;
+                    document.getElementById('googleDriveLink').value = data.googleDriveLink;
+                    statusSelect.value = data.status;
+
+                    if (data.status === 'Custom Remarks') {
+                        customRemarksContainer.classList.remove('hidden');
+                        customRemarksInput.value = data.customRemarks;
+                    } else {
+                        customRemarksContainer.classList.add('hidden');
+                        customRemarksInput.value = '';
+                    }
+                    
+                    // Scroll to the admin form
+                    adminSection.scrollIntoView({ behavior: 'smooth' });
+                }
+            } catch (e) {
+                console.error("Error fetching document for edit: ", e);
+            }
+        }
+        
+        // Function to set up the Firestore listener for documents.
+        function setupFirestoreListener() {
+            if (unsubscribeFromFirestore) {
+                unsubscribeFromFirestore();
+                unsubscribeFromFirestore = null;
+            }
+
+            const documentsCollection = collection(db, `artifacts/${appId}/public/data/documents`);
+            try {
+                unsubscribeFromFirestore = onSnapshot(documentsCollection, (snapshot) => {
+                    const documents = [];
+                    snapshot.forEach(doc => {
+                        documents.push({ id: doc.id, ...doc.data() });
+                    });
+                    
+                    // Sort documents by date in memory (descending)
+                    documents.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    
+                    renderDocuments(documents);
+                });
+            } catch (error) {
+                console.error("Failed to set up Firestore listener for documents:", error);
+            }
+        }
+
+        // Function to set up the Firestore listener for categories.
+        function setupCategoriesListener() {
+            if (unsubscribeFromCategories) {
+                unsubscribeFromCategories();
+                unsubscribeFromCategories = null;
+            }
+
+            const categoriesCollection = collection(db, `artifacts/${appId}/public/data/categories`);
+            try {
+                unsubscribeFromCategories = onSnapshot(categoriesCollection, (snapshot) => {
+                    const defaultCategories = ['Executive Order', 'Certified as Urgent'];
+                    const fetchedCategories = [];
+                    
+                    snapshot.forEach(doc => {
+                        fetchedCategories.push({ id: doc.id, name: doc.data().name });
+                    });
+
+                    // Populate the category select dropdown
+                    categorySelect.innerHTML = '';
+                    defaultCategories.concat(fetchedCategories.map(c => c.name)).forEach(category => {
+                        const option = document.createElement('option');
+                        option.value = category;
+                        option.textContent = category;
+                        categorySelect.appendChild(option);
+                    });
+
+                    // Populate the list for admin to rename/delete categories
+                    categoriesList.innerHTML = '';
+                    
+                    // First, display the hardcoded categories without action buttons
+                    defaultCategories.forEach(categoryName => {
+                        const categoryItem = document.createElement('div');
+                        categoryItem.className = 'flex justify-between items-center bg-white p-3 rounded-md shadow-sm';
+                        categoryItem.innerHTML = `<span class="text-sm font-medium text-gray-800">${categoryName}</span>`;
+                        categoriesList.appendChild(categoryItem);
+                    });
+
+                    // Then, display the custom categories with action buttons
+                    fetchedCategories.forEach(category => {
+                        const categoryItem = document.createElement('div');
+                        categoryItem.className = 'flex justify-between items-center bg-white p-3 rounded-md shadow-sm';
+                        categoryItem.innerHTML = `
+                            <span class="text-sm font-medium text-gray-800">${category.name}</span>
+                            <div class="flex space-x-2">
+                                <button class="rename-cat-btn text-blue-500 hover:text-blue-700" data-id="${category.id}" data-name="${category.name}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                    </svg>
+                                </button>
+                                <button class="delete-cat-btn text-red-500 hover:text-red-700" data-id="${category.id}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                        `;
+                        categoriesList.appendChild(categoryItem);
+                    });
+
+                    // Attach event listeners for the new buttons
+                    document.querySelectorAll('.rename-cat-btn').forEach(button => {
+                        button.addEventListener('click', () => openRenameCategoryModal(button.dataset.id, button.dataset.name));
+                    });
+                    document.querySelectorAll('.delete-cat-btn').forEach(button => {
+                        button.addEventListener('click', () => openDeleteModal(button.dataset.id, 'category'));
+                    });
+
+                });
+            } catch (error) {
+                console.error("Failed to set up Firestore listener for categories:", error);
+            }
+        }
+        
+        // Handle rename category modal
+        function openRenameCategoryModal(id, name) {
+            renameCategoryIdInput.value = id;
+            renameCategoryInput.value = name;
+            renameCategoryModal.classList.add('modal-open');
+        }
+
+        cancelRenameButton.addEventListener('click', () => {
+            renameCategoryModal.classList.remove('modal-open');
+        });
+
+        renameCategoryForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const user = auth.currentUser;
+            if (!user) {
+                console.error("Permission denied. You must be an admin to rename a category.");
+                return;
+            }
+
+            const id = renameCategoryIdInput.value;
+            const newName = renameCategoryInput.value.trim();
+
+            if (newName) {
+                try {
+                    const categoryRef = doc(db, `artifacts/${appId}/public/data/categories`, id);
+                    await updateDoc(categoryRef, { name: newName });
+                    console.log("Category renamed successfully!");
+                } catch (e) {
+                    console.error("Error renaming category:", e);
+                }
+            }
+            renameCategoryModal.classList.remove('modal-open');
+        });
+        
+        // --- Auth State Listener ---
+        onAuthStateChanged(auth, (user) => {
+            // Log the auth state for debugging
+            if (user) {
+                console.log(`User state changed: UID=${user.uid}`);
+            } else {
+                console.log("User state changed: No user logged in.");
+            }
+            
+            currentUserId = user ? user.uid : null;
+            // A non-anonymous user is an admin.
+            if (user) {
+                authButton.textContent = "Logout";
+                userIdDisplay.textContent = `User ID: ${currentUserId}`;
+                userIdDisplay.classList.remove('hidden');
+                adminSection.classList.remove('hidden');
+                setupFirestoreListener();
+                setupCategoriesListener();
+            } else {
+                authButton.textContent = "Admin Login";
+                userIdDisplay.classList.add('hidden');
+                adminSection.classList.add('hidden');
+                // The anonymous user can still view public documents.
+                setupFirestoreListener();
+                if (unsubscribeFromCategories) {
+                    unsubscribeFromCategories();
+                    unsubscribeFromCategories = null;
+                }
+            }
+        });
     </script>
 </body>
 </html>
