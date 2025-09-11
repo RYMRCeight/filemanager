@@ -71,6 +71,7 @@
                         <select id="categoryFilter" class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
                             <option value="">Select a Category</option>
                         </select>
+                        <input type="text" id="documentSearchInput" placeholder="Search documents..." class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
                     </div>
                 </div>
                 <div id="documentsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -282,6 +283,7 @@
 
         // Search DOM elements
         const categoryFilter = document.getElementById('categoryFilter');
+        const documentSearchInput = document.getElementById('documentSearchInput');
         
         let currentUserId = null;
         // Variable to hold the unsubscribe function for the Firestore listener
@@ -459,7 +461,7 @@
 
             documents.forEach(doc => {
                 const docCard = document.createElement('div');
-                docCard.className = `relative flex flex-col justify-between min-h-[12rem] bg-white border border-gray-200 rounded-lg p-5 shadow-sm hover:shadow-md transition-shadow duration-200`;
+                docCard.className = `relative flex flex-col justify-between min-h-[8rem] bg-white border border-gray-200 rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow duration-200`;
                 docCard.innerHTML = `
                     <div class="flex-grow overflow-y-auto pr-2 custom-scrollbar">
                         <h4 class="text-base font-semibold text-gray-900">${doc.title}</h4>
@@ -765,9 +767,10 @@
             setupCategoriesListener();
         });
 
-        // Function to filter and render documents based on the selected category
+        // Function to filter and render documents based on the selected category and search query
         function filterAndRenderDocuments() {
             const selectedCategory = categoryFilter.value;
+            const searchText = documentSearchInput.value.toLowerCase();
             
             // If no category is selected, clear the list and display a message.
             if (selectedCategory === "") {
@@ -775,14 +778,25 @@
                 return;
             }
             
-            // Filter the documents by the selected category
+            // Filter the documents by the selected category first
             let filteredDocuments = allDocuments.filter(doc => doc.category === selectedCategory);
+
+            // Then, filter the results by the search query if it exists
+            if (searchText) {
+                filteredDocuments = filteredDocuments.filter(doc =>
+                    doc.title.toLowerCase().includes(searchText) ||
+                    doc.DocumentNumber.toLowerCase().includes(searchText)
+                );
+            }
 
             renderDocuments(filteredDocuments);
         }
         
-        // Event listener for filtering
+        // Event listener for filtering by category
         categoryFilter.addEventListener('change', filterAndRenderDocuments);
+
+        // Event listener for filtering by search input
+        documentSearchInput.addEventListener('input', filterAndRenderDocuments);
 
     </script>
 </body>
