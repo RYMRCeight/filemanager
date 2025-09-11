@@ -754,19 +754,15 @@
                 userIdDisplay.textContent = `User ID: ${currentUserId}`;
                 userIdDisplay.classList.remove('hidden');
                 adminSection.classList.remove('hidden');
-                setupFirestoreListener();
-                setupCategoriesListener();
             } else {
                 authButton.textContent = "Admin Login";
                 userIdDisplay.classList.add('hidden');
                 adminSection.classList.add('hidden');
-                // The anonymous user can still view public documents.
-                setupFirestoreListener();
-                if (unsubscribeFromCategories) {
-                    unsubscribeFromCategories();
-                    unsubscribeFromCategories = null;
-                }
             }
+            
+            // This listener should be set up for both public and admin views.
+            setupFirestoreListener();
+            setupCategoriesListener();
         });
 
         // Function to filter and render documents based on the selected category
