@@ -32,14 +32,25 @@
         .modal-open .modal {
             transform: scale(1);
         }
+
+        /* Custom scrollbar for card content */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #d1d5db;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background-color: #f3f4f6;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col items-center p-4">
 
-    <!-- Main Application Container -->
     <div class="w-full max-w-4xl bg-white rounded-xl shadow-lg p-6 md:p-8 space-y-6">
 
-        <!-- Header and Login/Logout Button -->
         <header class="flex flex-col md:flex-row justify-between items-center pb-4 border-b border-gray-200">
             <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2 md:mb-0">Executive File Manager</h1>
             <div class="flex items-center space-x-2">
@@ -50,26 +61,30 @@
             </div>
         </header>
 
-        <!-- Main Content Area -->
         <main class="space-y-8">
 
-            <!-- Public Document List -->
+            <section class="flex flex-col md:flex-row gap-4 mb-8">
+                <div class="flex-grow">
+                    <label for="searchInput" class="sr-only">Search documents</label>
+                    <input type="text" id="searchInput" placeholder="Search by title, number, or category..." class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3">
+                </div>
+                <button id="searchButton" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-md transition-colors duration-200">
+                    Search
+                </button>
+            </section>
+
             <section>
                 <h2 class="text-2xl font-semibold text-gray-900 mb-4">Public Documents <span class="text-base text-gray-500 font-normal">(Sorted by date, newest first)</span></h2>
                 <div id="documentsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <!-- Documents will be dynamically inserted here -->
-                </div>
+                    </div>
             </section>
 
-            <!-- Admin Section (Hidden by Default) -->
             <section id="adminSection" class="hidden">
                 <h2 class="text-2xl font-semibold text-gray-900 mb-4">Admin Panel</h2>
                 
-                <!-- Manage Categories Section -->
                 <div class="bg-gray-50 p-6 rounded-xl shadow-inner space-y-4 mb-6">
                     <h3 class="text-xl font-medium text-gray-700">Manage Categories</h3>
                     
-                    <!-- Add New Category -->
                     <div class="flex flex-col md:flex-row md:items-end gap-4">
                         <div class="flex-grow flex flex-col">
                             <label for="newCategoryInput" class="text-sm font-medium text-gray-600">Add New Category</label>
@@ -80,16 +95,13 @@
                         </button>
                     </div>
 
-                    <!-- Existing Categories List -->
                     <div>
                         <h4 class="text-lg font-medium text-gray-700 mb-2">Your Custom Categories</h4>
                         <div id="categoriesList" class="space-y-2">
-                            <!-- Categories will be dynamically inserted here -->
-                        </div>
+                            </div>
                     </div>
                 </div>
 
-                <!-- Add/Edit Document Form -->
                 <form id="documentForm" class="bg-gray-50 p-6 rounded-xl shadow-inner space-y-4">
                     <h3 id="formTitle" class="text-xl font-medium text-gray-700">Add New Document</h3>
                     <input type="hidden" id="documentId">
@@ -102,8 +114,7 @@
                         <div class="flex flex-col">
                             <label for="category" class="text-sm font-medium text-gray-600">Category</label>
                             <select id="category" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                <!-- Categories will be dynamically populated here -->
-                            </select>
+                                </select>
                         </div>
                     </div>
                     
@@ -145,9 +156,6 @@
         </main>
     </div>
 
-    <!-- Modals -->
-
-    <!-- Login Modal -->
     <div id="loginModal" class="modal-overlay">
         <div class="modal space-y-4">
             <h3 class="text-xl font-bold text-white">Admin Login</h3>
@@ -163,7 +171,6 @@
         </div>
     </div>
     
-    <!-- Forgot Password Modal -->
     <div id="forgotPasswordModal" class="modal-overlay">
         <div class="modal space-y-4">
             <h3 class="text-xl font-bold text-gray-900">Forgot Password</h3>
@@ -179,7 +186,6 @@
         </div>
     </div>
 
-    <!-- Delete Confirmation Modal (Re-used for Documents and Categories) -->
     <div id="deleteModal" class="modal-overlay">
         <div class="modal space-y-4">
             <h3 class="text-xl font-bold text-gray-900">Confirm Deletion</h3>
@@ -192,7 +198,6 @@
         </div>
     </div>
 
-    <!-- Rename Category Modal -->
     <div id="renameCategoryModal" class="modal-overlay">
         <div class="modal space-y-4">
             <h3 class="text-xl font-bold text-gray-900">Rename Category</h3>
@@ -210,7 +215,6 @@
     </div>
 
 
-    <!-- Firebase SDK Imports -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -277,11 +281,18 @@
         const renameCategoryIdInput = document.getElementById('renameCategoryId');
         const renameCategoryInput = document.getElementById('renameCategoryInput');
         const cancelRenameButton = document.getElementById('cancelRenameButton');
+
+        // NEW: Search DOM elements
+        const searchInput = document.getElementById('searchInput');
+        const searchButton = document.getElementById('searchButton');
         
         let currentUserId = null;
         // Variable to hold the unsubscribe function for the Firestore listener
         let unsubscribeFromFirestore = null;
         let unsubscribeFromCategories = null;
+
+        // NEW: Global variable to store all documents
+        let allDocuments = [];
 
         // --- Event Listeners and Functions ---
         
@@ -451,14 +462,16 @@
 
             documents.forEach(doc => {
                 const docCard = document.createElement('div');
-                docCard.className = `relative bg-white border border-gray-200 rounded-lg p-5 shadow-sm space-y-2 hover:shadow-md transition-shadow duration-200`;
+                docCard.className = `relative flex flex-col justify-between min-h-[16rem] bg-white border border-gray-200 rounded-lg p-5 shadow-sm hover:shadow-md transition-shadow duration-200`;
                 docCard.innerHTML = `
-                    <h4 class="text-lg font-semibold text-gray-900">${doc.title}</h4>
-                    <p class="text-sm text-gray-600"><strong>Document:</strong> ${doc.DocumentNumber}</p>
-                    <p class="text-sm text-gray-600"><strong>Category:</strong> ${doc.category}</p>
-                    <p class="text-sm text-gray-600"><strong>Date:</strong> ${new Date(doc.date).toLocaleDateString()}</p>
-                    <p class="text-sm font-medium ${doc.status === 'Completed' ? 'text-green-600' : 'text-yellow-600'}"><strong>Status:</strong> ${doc.status}</p>
-                    ${doc.status === 'Custom Remarks' && doc.customRemarks ? `<p class="text-xs text-gray-500 italic mt-1">"${doc.customRemarks}"</p>` : ''}
+                    <div class="flex-grow overflow-y-auto pr-2 custom-scrollbar">
+                        <h4 class="text-lg font-semibold text-gray-900">${doc.title}</h4>
+                        <p class="text-sm text-gray-600"><strong>Document:</strong> ${doc.DocumentNumber}</p>
+                        <p class="text-sm text-gray-600"><strong>Category:</strong> ${doc.category}</p>
+                        <p class="text-sm text-gray-600"><strong>Date:</strong> ${new Date(doc.date).toLocaleDateString()}</p>
+                        <p class="text-sm font-medium ${doc.status === 'Completed' ? 'text-green-600' : 'text-yellow-600'}"><strong>Status:</strong> ${doc.status}</p>
+                        ${doc.status === 'Custom Remarks' && doc.customRemarks ? `<p class="text-xs text-gray-500 italic mt-1">"${doc.customRemarks}"</p>` : ''}
+                    </div>
                     <div class="pt-2 border-t border-gray-100 mt-2">
                         <a href="${doc.googleDriveLink}" target="_blank" class="inline-flex items-center text-indigo-600 hover:text-indigo-800 transition-colors duration-200">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -599,7 +612,16 @@
                     // Sort documents by date in memory (descending)
                     documents.sort((a, b) => new Date(b.date) - new Date(a.date));
                     
-                    renderDocuments(documents);
+                    // Store the full list of documents in the global variable - NEW
+                    allDocuments = documents;
+
+                    // Render documents with search applied
+                    const query = searchInput.value;
+                    if (query) {
+                        filterAndRenderDocuments(allDocuments, query);
+                    } else {
+                        renderDocuments(allDocuments);
+                    }
                 });
             } catch (error) {
                 console.error("Failed to set up Firestore listener for documents:", error);
@@ -742,6 +764,31 @@
                     unsubscribeFromCategories();
                     unsubscribeFromCategories = null;
                 }
+            }
+        });
+
+        // NEW: Search functionality logic
+        function filterAndRenderDocuments(documents, query) {
+            const lowerCaseQuery = query.toLowerCase();
+            const filteredDocuments = documents.filter(doc => {
+                return doc.title.toLowerCase().includes(lowerCaseQuery) ||
+                       doc.DocumentNumber.toLowerCase().includes(lowerCaseQuery) ||
+                       doc.category.toLowerCase().includes(lowerCaseQuery);
+            });
+            renderDocuments(filteredDocuments);
+        }
+
+        searchButton.addEventListener('click', () => {
+            const query = searchInput.value;
+            filterAndRenderDocuments(allDocuments, query);
+        });
+
+        searchInput.addEventListener('keyup', (event) => {
+            if (event.key === 'Enter') {
+                searchButton.click();
+            } else if (searchInput.value === '') {
+                // Clear the search and show all documents if the input is empty
+                renderDocuments(allDocuments);
             }
         });
     </script>
