@@ -49,7 +49,7 @@
 </head>
 <body class="min-h-screen flex flex-col items-center p-4">
 
-    <div class="w-full max-w-4xl bg-white rounded-xl shadow-lg p-6 md:p-8 space-y-6">
+    <div class="w-full bg-white rounded-xl shadow-lg p-4 md:p-6 lg:p-8 space-y-6">
 
         <header class="flex flex-col md:flex-row justify-between items-center pb-4 border-b border-gray-200">
             <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2 md:mb-0">Executive File Manager</h1>
@@ -74,7 +74,7 @@
                         <input type="text" id="documentSearchInput" placeholder="Search documents..." class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
                     </div>
                 </div>
-                <div id="documentsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div id="documentsList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     </div>
             </section>
 
@@ -464,15 +464,15 @@
                 docCard.className = `relative flex flex-col justify-between min-h-[8rem] bg-white border border-gray-200 rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow duration-200`;
                 docCard.innerHTML = `
                     <div class="flex-grow overflow-y-auto pr-2 custom-scrollbar">
-                        <h4 class="text-base font-semibold text-gray-900">${doc.title}</h4>
-                        <p class="text-sm text-gray-600"><strong>Document:</strong> ${doc.DocumentNumber}</p>
-                        <p class="text-sm text-gray-600"><strong>Category:</strong> ${doc.category}</p>
-                        <p class="text-sm text-gray-600"><strong>Date:</strong> ${new Date(doc.date).toLocaleDateString()}</p>
-                        <p class="text-sm font-medium ${doc.status === 'Completed' ? 'text-green-600' : 'text-yellow-600'}"><strong>Status:</strong> ${doc.status}</p>
-                        ${doc.status === 'Custom Remarks' && doc.customRemarks ? `<p class="text-xs text-gray-500 italic mt-1">"${doc.customRemarks}"</p>` : ''}
+                        <h4 class="text-sm md:text-base font-semibold text-gray-900">${doc.title}</h4>
+                        <p class="text-xs md:text-sm text-gray-600"><strong>Document:</strong> ${doc.DocumentNumber}</p>
+                        <p class="text-xs md:text-sm text-gray-600"><strong>Category:</strong> ${doc.category}</p>
+                        <p class="text-xs md:text-sm text-gray-600"><strong>Date:</strong> ${new Date(doc.date).toLocaleDateString()}</p>
+                        <p class="text-xs md:text-sm font-medium ${doc.status === 'Completed' ? 'text-green-600' : 'text-yellow-600'}"><strong>Status:</strong> ${doc.status}</p>
+                        ${doc.status === 'Custom Remarks' && doc.customRemarks ? `<p class="text-xs md:text-sm text-gray-500 italic mt-1">"${doc.customRemarks}"</p>` : ''}
                     </div>
                     <div class="pt-2 border-t border-gray-100 mt-2">
-                        <a href="${doc.googleDriveLink}" target="_blank" class="inline-flex items-center text-indigo-600 hover:text-indigo-800 transition-colors duration-200">
+                        <a href="${doc.googleDriveLink}" target="_blank" class="inline-flex items-center text-indigo-600 hover:text-indigo-800 transition-colors duration-200 text-xs md:text-sm">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                             </svg>
