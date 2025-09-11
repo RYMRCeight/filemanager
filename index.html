@@ -56,7 +56,7 @@
             <!-- Public Document List -->
             <section>
                 <h2 class="text-2xl font-semibold text-gray-900 mb-4">Public Documents <span class="text-base text-gray-500 font-normal">(Sorted by date, newest first)</span></h2>
-                <div id="documentsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div id="DocumentsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <!-- Documents will be dynamically inserted here -->
                 </div>
             </section>
@@ -90,14 +90,14 @@
                 </div>
 
                 <!-- Add/Edit Document Form -->
-                <form id="documentForm" class="bg-gray-50 p-6 rounded-xl shadow-inner space-y-4">
+                <form id="DocumentForm" class="bg-gray-50 p-6 rounded-xl shadow-inner space-y-4">
                     <h3 id="formTitle" class="text-xl font-medium text-gray-700">Add New Document</h3>
-                    <input type="hidden" id="documentId">
+                    <input type="hidden" id="DocumentId">
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="flex flex-col">
-                            <label for="DOCUMENTNumber" class="text-sm font-medium text-gray-600">DOCUMENT Number</label>
-                            <input type="text" id="DOCUMENTNumber" required placeholder="e.g., EO-2023-01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <label for="DocumentNumber" class="text-sm font-medium text-gray-600">Document Number</label>
+                            <input type="text" id="DocumentNumber" required placeholder="e.g., EO-2023-01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                         </div>
                         <div class="flex flex-col">
                             <label for="category" class="text-sm font-medium text-gray-600">Category</label>
@@ -109,7 +109,7 @@
                     
                     <div class="flex flex-col">
                         <label for="title" class="text-sm font-medium text-gray-600">Title</label>
-                        <input type="text" id="title" required placeholder="Enter document title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <input type="text" id="title" required placeholder="Enter Document title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                     </div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -183,7 +183,7 @@
     <div id="deleteModal" class="modal-overlay">
         <div class="modal space-y-4">
             <h3 class="text-xl font-bold text-gray-900">Confirm Deletion</h3>
-            <p id="deleteMessage">Are you sure you want to delete this document? This action cannot be undone.</p>
+            <p id="deleteMessage">Are you sure you want to delete this Document? This action cannot be undone.</p>
             <div id="deleteError" class="text-sm text-red-500 font-medium text-center hidden"></div>
             <div class="flex justify-end space-x-2">
                 <button id="cancelDeleteButton" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded-md transition-colors duration-200">Cancel</button>
@@ -233,8 +233,8 @@
         if (Object.keys(firebaseConfig).length === 0) {
             console.error("Firebase config is not defined. Please check your environment.");
             // Gracefully exit or show an error to the user
-            document.getElementById('documentsList').innerHTML = `<p class="text-red-500">Firebase is not configured. Please contact the administrator.</p>`;
-            document.getElementById('authButton').disabled = true;
+            Document.getElementById('DocumentsList').innerHTML = `<p class="text-red-500">Firebase is not configured. Please contact the administrator.</p>`;
+            Document.getElementById('authButton').disabled = true;
         }
 
         const app = initializeApp(firebaseConfig);
@@ -245,38 +245,38 @@
         setLogLevel('debug');
         
         // --- DOM Elements ---
-        const authButton = document.getElementById('authButton');
-        const userIdDisplay = document.getElementById('userIdDisplay');
-        const documentsList = document.getElementById('documentsList');
-        const adminSection = document.getElementById('adminSection');
-        const loginModal = document.getElementById('loginModal');
-        const loginForm = document.getElementById('loginForm');
-        const closeLoginModal = document.getElementById('closeLoginModal');
-        const documentForm = document.getElementById('documentForm');
-        const documentIdInput = document.getElementById('documentId');
-        const formTitle = document.getElementById('formTitle');
-        const submitButton = document.getElementById('submitButton');
-        const deleteModal = document.getElementById('deleteModal');
-        const confirmDeleteButton = document.getElementById('confirmDeleteButton');
-        const cancelDeleteButton = document.getElementById('cancelDeleteButton');
-        const deleteError = document.getElementById('deleteError');
-        const statusSelect = document.getElementById('status');
-        const customRemarksContainer = document.getElementById('customRemarksContainer');
-        const customRemarksInput = document.getElementById('customRemarks');
-        const forgotPasswordLink = document.getElementById('forgotPasswordLink');
-        const forgotPasswordModal = document.getElementById('forgotPasswordModal');
-        const forgotPasswordForm = document.getElementById('forgotPasswordForm');
-        const closeForgotPasswordModal = document.getElementById('closeForgotPasswordModal');
-        const resetMessage = document.getElementById('resetMessage');
-        const categorySelect = document.getElementById('category');
-        const newCategoryInput = document.getElementById('newCategoryInput');
-        const addCategoryButton = document.getElementById('addCategoryButton');
-        const categoriesList = document.getElementById('categoriesList');
-        const renameCategoryModal = document.getElementById('renameCategoryModal');
-        const renameCategoryForm = document.getElementById('renameCategoryForm');
-        const renameCategoryIdInput = document.getElementById('renameCategoryId');
-        const renameCategoryInput = document.getElementById('renameCategoryInput');
-        const cancelRenameButton = document.getElementById('cancelRenameButton');
+        const authButton = Document.getElementById('authButton');
+        const userIdDisplay = Document.getElementById('userIdDisplay');
+        const DocumentsList = Document.getElementById('DocumentsList');
+        const adminSection = Document.getElementById('adminSection');
+        const loginModal = Document.getElementById('loginModal');
+        const loginForm = Document.getElementById('loginForm');
+        const closeLoginModal = Document.getElementById('closeLoginModal');
+        const DocumentForm = Document.getElementById('DocumentForm');
+        const DocumentIdInput = Document.getElementById('DocumentId');
+        const formTitle = Document.getElementById('formTitle');
+        const submitButton = Document.getElementById('submitButton');
+        const deleteModal = Document.getElementById('deleteModal');
+        const confirmDeleteButton = Document.getElementById('confirmDeleteButton');
+        const cancelDeleteButton = Document.getElementById('cancelDeleteButton');
+        const deleteError = Document.getElementById('deleteError');
+        const statusSelect = Document.getElementById('status');
+        const customRemarksContainer = Document.getElementById('customRemarksContainer');
+        const customRemarksInput = Document.getElementById('customRemarks');
+        const forgotPasswordLink = Document.getElementById('forgotPasswordLink');
+        const forgotPasswordModal = Document.getElementById('forgotPasswordModal');
+        const forgotPasswordForm = Document.getElementById('forgotPasswordForm');
+        const closeForgotPasswordModal = Document.getElementById('closeForgotPasswordModal');
+        const resetMessage = Document.getElementById('resetMessage');
+        const categorySelect = Document.getElementById('category');
+        const newCategoryInput = Document.getElementById('newCategoryInput');
+        const addCategoryButton = Document.getElementById('addCategoryButton');
+        const categoriesList = Document.getElementById('categoriesList');
+        const renameCategoryModal = Document.getElementById('renameCategoryModal');
+        const renameCategoryForm = Document.getElementById('renameCategoryForm');
+        const renameCategoryIdInput = Document.getElementById('renameCategoryId');
+        const renameCategoryInput = Document.getElementById('renameCategoryInput');
+        const cancelRenameButton = Document.getElementById('cancelRenameButton');
         
         let currentUserId = null;
         // Variable to hold the unsubscribe function for the Firestore listener
@@ -317,7 +317,7 @@
                     // Use a simple text update instead of alert
                     const errorMessage = loginForm.querySelector('.error-message');
                     if (errorMessage) errorMessage.remove();
-                    const errorDiv = document.createElement('div');
+                    const errorDiv = Document.createElement('div');
                     errorDiv.className = "error-message text-center text-sm text-red-500 mt-2";
                     errorDiv.textContent = "Login failed. Please check your credentials.";
                     loginForm.appendChild(errorDiv);
@@ -346,7 +346,7 @@
         // Handle forgot password form submission
         forgotPasswordForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const email = document.getElementById('resetEmail').value;
+            const email = Document.getElementById('resetEmail').value;
             resetMessage.classList.remove('hidden');
             resetMessage.classList.remove('text-red-500', 'text-green-500');
 
@@ -393,68 +393,68 @@
             }
         });
 
-        // Handle form submission for adding/updating documents
-        documentForm.addEventListener('submit', async (e) => {
+        // Handle form submission for adding/updating Documents
+        DocumentForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const user = auth.currentUser;
             if (!user) {
-                console.error("Permission denied. You must be an admin to add/edit a document.");
+                console.error("Permission denied. You must be an admin to add/edit a Document.");
                 return;
             }
 
-            const docId = documentIdInput.value;
+            const docId = DocumentIdInput.value;
             const docData = {
-                DOCUMENTNumber: document.getElementById('DOCUMENTNumber').value,
-                category: document.getElementById('category').value,
-                title: document.getElementById('title').value,
-                date: document.getElementById('date').value,
-                googleDriveLink: document.getElementById('googleDriveLink').value,
+                DocumentNumber: Document.getElementById('DocumentNumber').value,
+                category: Document.getElementById('category').value,
+                title: Document.getElementById('title').value,
+                date: Document.getElementById('date').value,
+                googleDriveLink: Document.getElementById('googleDriveLink').value,
                 status: statusSelect.value,
                 customRemarks: customRemarksInput.value || ""
             };
             
             try {
                 if (docId) {
-                    // Update existing document
-                    const docRef = doc(db, `artifacts/${appId}/public/data/documents`, docId);
+                    // Update existing Document
+                    const docRef = doc(db, `artifacts/${appId}/public/data/Documents`, docId);
                     await updateDoc(docRef, docData);
                     console.log("Document updated successfully!");
                 } else {
-                    // Add new document
-                    const docRef = collection(db, `artifacts/${appId}/public/data/documents`);
+                    // Add new Document
+                    const docRef = collection(db, `artifacts/${appId}/public/data/Documents`);
                     await addDoc(docRef, docData);
                     console.log("Document added successfully!");
                 }
                 
                 // Reset the form
-                documentForm.reset();
-                documentIdInput.value = '';
+                DocumentForm.reset();
+                DocumentIdInput.value = '';
                 formTitle.textContent = 'Add New Document';
                 submitButton.textContent = 'Add Document';
                 customRemarksContainer.classList.add('hidden');
                 customRemarksInput.required = false;
 
             } catch (e) {
-                console.error("Error adding/updating document: ", e);
+                console.error("Error adding/updating Document: ", e);
             }
         });
         
-        // Function to render documents to the UI
-        function renderDocuments(documents) {
-            documentsList.innerHTML = '';
+        // Function to render Documents to the UI
+        function renderDocuments(Documents) {
+            DocumentsList.innerHTML = '';
             
-            if (documents.length === 0) {
-                documentsList.innerHTML = `<p class="text-center text-gray-500 col-span-full">No documents found.</p>`;
+            if (Documents.length === 0) {
+                DocumentsList.innerHTML = `<p class="text-center text-gray-500 col-span-full">No Documents found.</p>`;
                 return;
             }
 
-            documents.forEach(doc => {
-                const docCard = document.createElement('div');
+            Documents.forEach(doc => {
+                const docCard = Document.createElement('div');
                 docCard.className = `relative bg-white border border-gray-200 rounded-lg p-5 shadow-sm space-y-2 hover:shadow-md transition-shadow duration-200`;
                 docCard.innerHTML = `
                     <h4 class="text-lg font-semibold text-gray-900">${doc.title}</h4>
-                    <p class="text-sm text-gray-600"><strong>DOCUMENT:</strong> ${doc.DOCUMENTNumber}</p>
+                    <p class="text-sm text-gray-600"><strong>Document:</strong> ${doc.DocumentNumber}</p>
                     <p class="text-sm text-gray-600"><strong>Category:</strong> ${doc.category}</p>
                     <p class="text-sm text-gray-600"><strong>Date:</strong> ${new Date(doc.date).toLocaleDateString()}</p>
                     <p class="text-sm font-medium ${doc.status === 'Completed' ? 'text-green-600' : 'text-yellow-600'}"><strong>Status:</strong> ${doc.status}</p>
@@ -470,7 +470,7 @@
                 `;
 
                 if (currentUserId) {
-                    const adminActions = document.createElement('div');
+                    const adminActions = Document.createElement('div');
                     adminActions.className = "flex space-x-2 absolute top-4 right-4";
                     adminActions.innerHTML = `
                         <button class="edit-doc-btn text-blue-500 hover:text-blue-700 transition-colors duration-200" data-id="${doc.id}">
@@ -487,16 +487,16 @@
                     docCard.appendChild(adminActions);
                 }
                 
-                documentsList.appendChild(docCard);
+                DocumentsList.appendChild(docCard);
             });
             
             // Add listeners for edit/delete buttons after rendering
             if (currentUserId) {
-                document.querySelectorAll('.edit-doc-btn').forEach(button => {
+                Document.querySelectorAll('.edit-doc-btn').forEach(button => {
                     button.addEventListener('click', () => editDocument(button.dataset.id));
                 });
-                document.querySelectorAll('.delete-doc-btn').forEach(button => {
-                    button.addEventListener('click', () => openDeleteModal(button.dataset.id, 'document'));
+                Document.querySelectorAll('.delete-doc-btn').forEach(button => {
+                    button.addEventListener('click', () => openDeleteModal(button.dataset.id, 'Document'));
                 });
             }
         }
@@ -507,7 +507,7 @@
             confirmDeleteButton.dataset.id = itemId;
             confirmDeleteButton.dataset.type = itemType;
             deleteError.classList.add('hidden');
-            document.getElementById('deleteMessage').textContent = `Are you sure you want to delete this ${itemType}? This action cannot be undone.`;
+            Document.getElementById('deleteMessage').textContent = `Are you sure you want to delete this ${itemType}? This action cannot be undone.`;
         }
 
         // Close delete modal and handle cancel
@@ -529,8 +529,8 @@
             const itemType = confirmDeleteButton.dataset.type;
             
             try {
-                if (itemType === 'document') {
-                    const docRef = doc(db, `artifacts/${appId}/public/data/documents`, itemId);
+                if (itemType === 'Document') {
+                    const docRef = doc(db, `artifacts/${appId}/public/data/Documents`, itemId);
                     await deleteDoc(docRef);
                     console.log("Document deleted successfully!");
                 } else if (itemType === 'category') {
@@ -546,23 +546,23 @@
             }
         });
 
-        // Function to load document data into the form for editing
+        // Function to load Document data into the form for editing
         async function editDocument(docId) {
             try {
-                const docRef = doc(db, `artifacts/${appId}/public/data/documents`, docId);
+                const docRef = doc(db, `artifacts/${appId}/public/data/Documents`, docId);
                 const docSnap = await getDoc(docRef);
                 
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    documentIdInput.value = docId;
+                    DocumentIdInput.value = docId;
                     formTitle.textContent = 'Edit Document';
                     submitButton.textContent = 'Update Document';
                     
-                    document.getElementById('DOCUMENTNumber').value = data.DOCUMENTNumber;
-                    document.getElementById('category').value = data.category;
-                    document.getElementById('title').value = data.title;
-                    document.getElementById('date').value = data.date;
-                    document.getElementById('googleDriveLink').value = data.googleDriveLink;
+                    Document.getElementById('DocumentNumber').value = data.DocumentNumber;
+                    Document.getElementById('category').value = data.category;
+                    Document.getElementById('title').value = data.title;
+                    Document.getElementById('date').value = data.date;
+                    Document.getElementById('googleDriveLink').value = data.googleDriveLink;
                     statusSelect.value = data.status;
 
                     if (data.status === 'Custom Remarks') {
@@ -577,32 +577,32 @@
                     adminSection.scrollIntoView({ behavior: 'smooth' });
                 }
             } catch (e) {
-                console.error("Error fetching document for edit: ", e);
+                console.error("Error fetching Document for edit: ", e);
             }
         }
         
-        // Function to set up the Firestore listener for documents.
+        // Function to set up the Firestore listener for Documents.
         function setupFirestoreListener() {
             if (unsubscribeFromFirestore) {
                 unsubscribeFromFirestore();
                 unsubscribeFromFirestore = null;
             }
 
-            const documentsCollection = collection(db, `artifacts/${appId}/public/data/documents`);
+            const DocumentsCollection = collection(db, `artifacts/${appId}/public/data/Documents`);
             try {
-                unsubscribeFromFirestore = onSnapshot(documentsCollection, (snapshot) => {
-                    const documents = [];
+                unsubscribeFromFirestore = onSnapshot(DocumentsCollection, (snapshot) => {
+                    const Documents = [];
                     snapshot.forEach(doc => {
-                        documents.push({ id: doc.id, ...doc.data() });
+                        Documents.push({ id: doc.id, ...doc.data() });
                     });
                     
-                    // Sort documents by date in memory (descending)
-                    documents.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    // Sort Documents by date in memory (descending)
+                    Documents.sort((a, b) => new Date(b.date) - new Date(a.date));
                     
-                    renderDocuments(documents);
+                    renderDocuments(Documents);
                 });
             } catch (error) {
-                console.error("Failed to set up Firestore listener for documents:", error);
+                console.error("Failed to set up Firestore listener for Documents:", error);
             }
         }
 
@@ -626,7 +626,7 @@
                     // Populate the category select dropdown
                     categorySelect.innerHTML = '';
                     defaultCategories.concat(fetchedCategories.map(c => c.name)).forEach(category => {
-                        const option = document.createElement('option');
+                        const option = Document.createElement('option');
                         option.value = category;
                         option.textContent = category;
                         categorySelect.appendChild(option);
@@ -637,7 +637,7 @@
                     
                     // First, display the hardcoded categories without action buttons
                     defaultCategories.forEach(categoryName => {
-                        const categoryItem = document.createElement('div');
+                        const categoryItem = Document.createElement('div');
                         categoryItem.className = 'flex justify-between items-center bg-white p-3 rounded-md shadow-sm';
                         categoryItem.innerHTML = `<span class="text-sm font-medium text-gray-800">${categoryName}</span>`;
                         categoriesList.appendChild(categoryItem);
@@ -645,7 +645,7 @@
 
                     // Then, display the custom categories with action buttons
                     fetchedCategories.forEach(category => {
-                        const categoryItem = document.createElement('div');
+                        const categoryItem = Document.createElement('div');
                         categoryItem.className = 'flex justify-between items-center bg-white p-3 rounded-md shadow-sm';
                         categoryItem.innerHTML = `
                             <span class="text-sm font-medium text-gray-800">${category.name}</span>
@@ -666,10 +666,10 @@
                     });
 
                     // Attach event listeners for the new buttons
-                    document.querySelectorAll('.rename-cat-btn').forEach(button => {
+                    Document.querySelectorAll('.rename-cat-btn').forEach(button => {
                         button.addEventListener('click', () => openRenameCategoryModal(button.dataset.id, button.dataset.name));
                     });
-                    document.querySelectorAll('.delete-cat-btn').forEach(button => {
+                    Document.querySelectorAll('.delete-cat-btn').forEach(button => {
                         button.addEventListener('click', () => openDeleteModal(button.dataset.id, 'category'));
                     });
 
@@ -736,7 +736,7 @@
                 authButton.textContent = "Admin Login";
                 userIdDisplay.classList.add('hidden');
                 adminSection.classList.add('hidden');
-                // The anonymous user can still view public documents.
+                // The anonymous user can still view public Documents.
                 setupFirestoreListener();
                 if (unsubscribeFromCategories) {
                     unsubscribeFromCategories();
