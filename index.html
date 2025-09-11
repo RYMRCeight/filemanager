@@ -96,8 +96,8 @@
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="flex flex-col">
-                            <label for="DOCUMENTNumber" class="text-sm font-medium text-gray-600">DOCUMENT Number</label>
-                            <input type="text" id="DOCUMENTNumber" required placeholder="e.g., EO-2023-01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <label for="DocumentNumber" class="text-sm font-medium text-gray-600">Document Number</label>
+                            <input type="text" id="DocumentNumber" required placeholder="e.g., EO-2023-01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                         </div>
                         <div class="flex flex-col">
                             <label for="category" class="text-sm font-medium text-gray-600">Category</label>
@@ -405,7 +405,7 @@
 
             const docId = documentIdInput.value;
             const docData = {
-                DOCUMENTNumber: document.getElementById('DOCUMENTNumber').value,
+                DocumentNumber: document.getElementById('DocumentNumber').value,
                 category: document.getElementById('category').value,
                 title: document.getElementById('title').value,
                 date: document.getElementById('date').value,
@@ -454,7 +454,7 @@
                 docCard.className = `relative bg-white border border-gray-200 rounded-lg p-5 shadow-sm space-y-2 hover:shadow-md transition-shadow duration-200`;
                 docCard.innerHTML = `
                     <h4 class="text-lg font-semibold text-gray-900">${doc.title}</h4>
-                    <p class="text-sm text-gray-600"><strong>DOCUMENT:</strong> ${doc.DOCUMENTNumber}</p>
+                    <p class="text-sm text-gray-600"><strong>Document:</strong> ${doc.DocumentNumber}</p>
                     <p class="text-sm text-gray-600"><strong>Category:</strong> ${doc.category}</p>
                     <p class="text-sm text-gray-600"><strong>Date:</strong> ${new Date(doc.date).toLocaleDateString()}</p>
                     <p class="text-sm font-medium ${doc.status === 'Completed' ? 'text-green-600' : 'text-yellow-600'}"><strong>Status:</strong> ${doc.status}</p>
@@ -558,7 +558,7 @@
                     formTitle.textContent = 'Edit Document';
                     submitButton.textContent = 'Update Document';
                     
-                    document.getElementById('DOCUMENTNumber').value = data.DOCUMENTNumber;
+                    document.getElementById('DocumentNumber').value = data.DocumentNumber;
                     document.getElementById('category').value = data.category;
                     document.getElementById('title').value = data.title;
                     document.getElementById('date').value = data.date;
