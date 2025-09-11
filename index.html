@@ -74,7 +74,15 @@
             </section>
 
             <section>
-                <h2 class="text-xl font-semibold text-gray-900 mb-4">Public Documents <span class="text-sm text-gray-500 font-normal">(Sorted by date, newest first)</span></h2>
+                <div class="flex flex-col md:flex-row justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-2 md:mb-0">Public Documents</h2>
+                    <div class="flex items-center space-x-2">
+                        <label for="categoryFilter" class="text-sm font-normal text-gray-500">Filter by Category:</label>
+                        <select id="categoryFilter" class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                            <option value="All">All</option>
+                        </select>
+                    </div>
+                </div>
                 <div id="documentsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     </div>
             </section>
@@ -285,6 +293,7 @@
         // Search DOM elements
         const searchInput = document.getElementById('searchInput');
         const searchButton = document.getElementById('searchButton');
+        const categoryFilter = document.getElementById('categoryFilter');
         
         let currentUserId = null;
         // Variable to hold the unsubscribe function for the Firestore listener
@@ -615,13 +624,8 @@
                     // Store the full list of documents in the global variable
                     allDocuments = documents;
 
-                    // Render documents with search applied
-                    const query = searchInput.value;
-                    if (query) {
-                        filterAndRenderDocuments(allDocuments, query);
-                    } else {
-                        renderDocuments(allDocuments);
-                    }
+                    // Apply current filters and render documents
+                    filterAndRenderDocuments();
                 });
             } catch (error) {
                 console.error("Failed to set up Firestore listener for documents:", error);
@@ -653,6 +657,16 @@
                         option.textContent = category;
                         categorySelect.appendChild(option);
                     });
+                    
+                    // Populate the public category filter dropdown
+                    categoryFilter.innerHTML = '<option value="All">All</option>';
+                    defaultCategories.concat(fetchedCategories.map(c => c.name)).forEach(category => {
+                        const option = document.createElement('option');
+                        option.value = category;
+                        option.textContent = category;
+                        categoryFilter.appendChild(option);
+                    });
+
 
                     // Populate the list for admin to rename/delete categories
                     categoriesList.innerHTML = '';
@@ -767,30 +781,40 @@
             }
         });
 
-        // Search functionality logic
-        function filterAndRenderDocuments(documents, query) {
-            const lowerCaseQuery = query.toLowerCase();
-            const filteredDocuments = documents.filter(doc => {
-                return doc.title.toLowerCase().includes(lowerCaseQuery) ||
-                       doc.DocumentNumber.toLowerCase().includes(lowerCaseQuery) ||
-                       doc.category.toLowerCase().includes(lowerCaseQuery);
-            });
+        // Function to filter and render documents based on both category and search query
+        function filterAndRenderDocuments() {
+            const selectedCategory = categoryFilter.value;
+            const searchQuery = searchInput.value.toLowerCase();
+            
+            let filteredDocuments = allDocuments;
+            
+            // First, filter by category if one is selected (not "All")
+            if (selectedCategory !== "All") {
+                filteredDocuments = filteredDocuments.filter(doc => doc.category === selectedCategory);
+            }
+
+            // Then, filter the remaining documents by the search query
+            if (searchQuery) {
+                filteredDocuments = filteredDocuments.filter(doc => {
+                    return doc.title.toLowerCase().includes(searchQuery) ||
+                           doc.DocumentNumber.toLowerCase().includes(searchQuery);
+                });
+            }
+
             renderDocuments(filteredDocuments);
         }
-
-        searchButton.addEventListener('click', () => {
-            const query = searchInput.value;
-            filterAndRenderDocuments(allDocuments, query);
-        });
-
+        
+        // Event listeners for filtering and searching
+        searchButton.addEventListener('click', filterAndRenderDocuments);
         searchInput.addEventListener('keyup', (event) => {
             if (event.key === 'Enter') {
-                searchButton.click();
+                filterAndRenderDocuments();
             } else if (searchInput.value === '') {
-                // Clear the search and show all documents if the input is empty
-                renderDocuments(allDocuments);
+                filterAndRenderDocuments();
             }
         });
+        categoryFilter.addEventListener('change', filterAndRenderDocuments);
+
     </script>
 </body>
 </html>
